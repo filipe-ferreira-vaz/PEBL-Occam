@@ -1,0 +1,18 @@
+{
+  "author": "",
+  "created_date": "2026-10-08T18:23:43Z",
+  "description": "",
+  "modified_date": "2026-10-08T18:23:48Z",
+  "study_name": "OpenCode",
+  "study_token": "",
+  "tests": [
+    {
+      "display_name": "maze",
+      "included": true,
+      "test_name": "maze",
+      "test_path": "maze"
+    }
+  ],
+  "upload_server_url": "",
+  "version": 1
+}

@@ -1,0 +1,11 @@
+subnum,maze,event,move,pos,x,y,abstime
+test,maze,MOVE,[2, 1],864,551,7459
+test,maze,MOVE,[3, 1],864,631,7974
+test,maze,MOVE,[3, 2],944,631,8291
+test,maze,MOVE,[4, 2],944,711,8510
+test,maze,MOVE,[4, 3],1024,711,8763
+test,maze,MOVE,[4, 4],1104,711,8962
+test,maze,MOVE,[3, 4],1104,631,9188
+test,maze,MOVE,[3, 5],1184,631,9368
+test,maze,MOVE,[4, 5],1184,711,9559
+test,maze,MOVE,[5, 5],1184,791,9745

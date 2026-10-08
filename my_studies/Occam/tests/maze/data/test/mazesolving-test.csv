@@ -1,0 +1,2 @@
+subnum,maze,shortestpath,totalmoves,pathlength,planningtime,firstmovetime,solutiontime,totaltime,moveseq,bestseq
+test,PRACTICE,11,14,11,2377,2974,2807,5781,1|6|11|12|17|18|19|14|15|20|25,1|6|11|12|17|18|19|14|15|20|25

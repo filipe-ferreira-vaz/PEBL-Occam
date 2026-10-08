@@ -1,0 +1,17 @@
+{
+  "chain_name": "Main",
+  "description": "Default chain for this study",
+  "items": [
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "maze"
+    }
+  ],
+  "lsl_enabled": false,
+  "lsl_stream_name": "PEBL_{test}",
+  "participant_counter": 1006,
+  "upload_enabled": false
+}

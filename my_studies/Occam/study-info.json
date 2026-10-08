@@ -1,0 +1,84 @@
+{
+  "author": "Filipe Vaz",
+  "created_date": "2026-10-08T16:26:53Z",
+  "description": "",
+  "modified_date": "2026-10-08T17:33:59Z",
+  "study_name": "Occam",
+  "study_token": "",
+  "tests": [
+    {
+      "display_name": "TNT",
+      "included": true,
+      "parameter_variants": {
+        "arrowLR": {
+          "description": "Parameter set: arrowLR",
+          "file": "TNT-arrowLR.par.json"
+        },
+        "keyboardSafe": {
+          "description": "Parameter set: keyboardSafe",
+          "file": "TNT-keyboardSafe.par.json"
+        },
+        "keyboardShift": {
+          "description": "Parameter set: keyboardShift",
+          "file": "TNT-keyboardShift.par.json"
+        },
+        "mousebutton": {
+          "description": "Parameter set: mousebutton",
+          "file": "TNT-mousebutton.par.json"
+        },
+        "mousetarget": {
+          "description": "Parameter set: mousetarget",
+          "file": "TNT-mousetarget.par.json"
+        },
+        "touchtarget": {
+          "description": "Parameter set: touchtarget",
+          "file": "TNT-touchtarget.par.json"
+        },
+        "userselect": {
+          "description": "Parameter set: userselect",
+          "file": "TNT-userselect.par.json"
+        }
+      },
+      "test_name": "TNT",
+      "test_path": "TNT"
+    },
+    {
+      "display_name": "bigfive",
+      "included": true,
+      "test_name": "bigfive",
+      "test_path": "bigfive"
+    },
+    {
+      "display_name": "maze",
+      "included": true,
+      "test_name": "maze",
+      "test_path": "maze"
+    },
+    {
+      "display_name": "ptrails",
+      "included": true,
+      "test_name": "ptrails",
+      "test_path": "ptrails"
+    },
+    {
+      "display_name": "tol/TOL",
+      "included": true,
+      "test_name": "tol/TOL",
+      "test_path": "tol"
+    },
+    {
+      "display_name": "affectgrid",
+      "included": true,
+      "test_name": "affectgrid",
+      "test_path": "affectgrid"
+    },
+    {
+      "display_name": "vsearch",
+      "included": true,
+      "test_name": "vsearch",
+      "test_path": "vsearch"
+    }
+  ],
+  "upload_server_url": "",
+  "version": 1
+}
