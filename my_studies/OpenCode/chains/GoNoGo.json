@@ -1,0 +1,17 @@
+{
+  "chain_name": "GoNoGo",
+  "description": "",
+  "items": [
+    {
+      "item_type": "test",
+      "language": "",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "gonogo"
+    }
+  ],
+  "lsl_enabled": false,
+  "lsl_stream_name": "PEBL_{test}",
+  "participant_counter": 1002,
+  "upload_enabled": false
+}

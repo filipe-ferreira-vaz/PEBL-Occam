@@ -1,0 +1,8 @@
+{
+ "DEBRIEF": "Thank you for participating. ",
+ "INST1": "INSTRUCTIONS\n\nYou will hear a series of tones.\n\n- When you hear the LOW-pitched tone, press the button as quickly as you can.\n- When you hear the HIGH-pitched tone, do not press anything.\n\nRespond only to the low-pitched (Go) tone. You have a short window after each tone to respond.\n\nThe task takes about 3 minutes with no breaks. Try to stay focused and still, and keep your eyes on the cross in the middle of the screen.",
+ "START": "When you are ready, make the response shown below to begin.",
+ "FEEDBACK_MISS": "Missed: press for the low tone",
+ "FEEDBACK_FA": "Wrong: do not press for the high tone",
+ "LANGUAGE": "en"
+}

@@ -1,0 +1,2 @@
+Practice version of the PEBL Auditory Go/No-Go Test: 20 trials (15 Go / 5 No-Go) with feedback after errors.
+Run it before the main gonogo test. Data are saved to gonogo-practice\data\
