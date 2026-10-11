@@ -5,6 +5,15 @@
 ## by my_studies/lib/sync-beeps.ps1. Edit only this master copy, then
 ## re-run the sync script.
 ##
+## Standard start/end beeps: the sync script also inserts
+##     BeepsStart()   right after the test's LSL setup line (window just opened)
+##     BeepsEnd()     right before the test's LSL shutdown line (test finished)
+## so every synced test beeps at its start and end automatically. BeepsEnd()
+## also saves all beeps to data/<subject>/beeps-<subject>.csv.
+## To opt a test out of the automatic calls, put this line anywhere in it:
+##     ## beeps: no auto calls
+## (the functions below stay available for calling by hand).
+##
 ## Why not MakeSineWave()?  In this PEBL build (2.4, Windows) MakeSineWave()
 ## returns a sound with no audio buffer: it plays for 0 ms. Instead, each
 ## tone is written once to a .wav file (via a small PowerShell helper) in the
@@ -24,6 +33,9 @@
 ##        script exits). Each play is recorded in gToneLog.
 ##   Beep(label:"beep")
 ##        Shortcut: 1000 Hz, 50 ms, amplitude 0.8, non-blocking.
+##   BeepsStart() / BeepsEnd()
+##        Standard 1000 Hz / 50 ms start and end beeps (see above). The end
+##        beep is blocking, so it finishes before the test closes.
 ##   GetToneLog()
 ##        List of [label, freq, durationMs, amplitude, timestamp, clocktime]
 ##        for every tone played so far.
@@ -162,6 +174,53 @@ define ToneParseTimeStamp(ts)
   hms <- SplitString(Nth(tokens,4), ":")
   secs <- ToNumber(Nth(hms,1))*3600 + ToNumber(Nth(hms,2))*60 + ToNumber(Nth(hms,3))
   return([ToNumber(Nth(tokens,5)), month, ToNumber(Nth(tokens,3)), secs])
+}
+
+
+## Standard start beep (inserted automatically by sync-beeps.ps1)
+define BeepsStart()
+{
+  MakeTone(1000, 50)   ## generate/load and sync the clock before playing
+  return(Beep("beep_start"))
+}
+
+
+## Standard end beep (inserted automatically by sync-beeps.ps1).
+## Blocking, then saves every beep of this run to data/<subject>/beeps-<subject>.csv
+define BeepsEnd()
+{
+  t <- PlayTone(1000, 50, 0.8, 1, "beep_end")
+  BeepsWriteLog()
+  return(t)
+}
+
+
+## Writes all beeps played so far to data/<subject>/beeps-<subject>.csv
+## (the same folder as the test's other data files; appends if it exists)
+define BeepsWriteLog()
+{
+  dir <- "data/" + gSubNum
+  if(not IsDirectory("data"))
+  {
+    MakeDirectory("data")
+  }
+  if(not IsDirectory(dir))
+  {
+    MakeDirectory(dir)
+  }
+  filename <- dir + "/beeps-" + gSubNum + ".csv"
+  isnew <- not FileExists(filename)
+  out <- FileOpenAppend(filename)
+  if(isnew)
+  {
+    FilePrint(out, "subnum,event,freq,durationms,amplitude,abstime,clocktime")
+  }
+  loop(tone, GetToneLog())
+  {
+    FilePrint(out, gSubNum + "," + ConcatenateList(tone, ","))
+  }
+  FileClose(out)
+  return(filename)
 }
 
 
