@@ -1,0 +1,17 @@
+{
+  "chain_name": "TNT",
+  "description": "",
+  "items": [
+    {
+      "item_type": "test",
+      "language": "",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "TNT"
+    }
+  ],
+  "lsl_enabled": false,
+  "lsl_stream_name": "PEBL_{test}",
+  "participant_counter": 1005,
+  "upload_enabled": false
+}

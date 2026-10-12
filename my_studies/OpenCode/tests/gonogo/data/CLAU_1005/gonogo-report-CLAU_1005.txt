@@ -1,0 +1,22 @@
+-----------------------------------------------
+PEBL Auditory Go/No-Go Task
+PEBL Version 2.4
+WINDOWS
+-----------------------------------------------
+Subject code: CLAU_1005
+Time:         Sun Oct 11 18:27:31 2026
+Block start:  2026-10-11 18:25:01.132
+Block end:    2026-10-11 18:27:31.177
+Parameters:   trials=150 go=112 nogo=38 maxgorun=3 maxnogorun=2 tone=300ms window=600-800ms feedback=0 responsemode=spacebar
+-----------------------------------------------
+Hits:                3
+Misses:              109
+False alarms:        0
+Correct rejections:  38
+Hit rate:            0.0267857
+False alarm rate:    0
+Accuracy:            0.273333
+Mean hit RT (ms):    371.667
+Median hit RT (ms):  395
+-----------------------------------------------
+beep_start (1000 Hz, 50 ms) at 775 ms (clock 2026-10-11 18:24:55.304)
