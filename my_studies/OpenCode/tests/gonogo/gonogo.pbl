@@ -1,0 +1,581 @@
+##  PEBL Auditory Go/No-Go task
+##  Adapted from the PEBL Go/No-Go task (Shane T. Mueller), which was designed after:
+##  Bezdjian, S. Baker, L. A., Lozano, D. I & Raine, A. (2009).
+##    Assessing inattention and impulsivity in children during the Go/NoGo task
+##    Br J Dev Psychol. 2009 June 1; 27(2): 365–383.
+##
+##  One continuous block of tones (default 150 trials, ~3 minutes, no breaks):
+##    Go tone    = 500 Hz  (go_tone_500Hz.wav,   300 ms)  -> respond
+##    No-Go tone = 1500 Hz (nogo_tone_1500Hz.wav, 300 ms) -> do not respond
+##  Trial = tone (300 ms) + jittered response window (uniform jittermin-jittermax ms).
+##  Responses are accepted from tone onset until the next tone; RT is from tone onset.
+##  Order is pseudorandom: at most maxgorun Go and maxnogorun No-Go in a row.
+##
+##  The practice test (tests/gonogo-practice/gonogo-practice.pbl) is a copy of
+##  this file that differs ONLY in the default parameters block below.
+##  Keep the two files in sync when changing anything else.
+
+define Start(p)
+{
+  InitializeUpload()  ## Initialize token-based hosting if upload.json exists
+  ##default values to use if .par file is not found
+  parpairs <- [["numtrials",150],     ##total number of trials in the block
+               ["gofraction",0.75],   ##proportion of Go trials (150 -> 112 Go / 38 No-Go; Go count is rounded down)
+               ["maxgorun",3],        ##maximum number of Go trials in a row
+               ["maxnogorun",2],      ##maximum number of No-Go trials in a row
+               ["tonedur",300],       ##tone duration in ms (must match the .wav files)
+               ["jittermin",600],     ##response window after the tone: minimum (ms)
+               ["jittermax",800],     ##response window after the tone: maximum (ms)
+               ["feedback",0],        ##1 = show feedback after errors (practice)
+               ["fileprefix","gonogo"], ##name of the data files
+               ["responsemode","spacebar"]]  ##Single-key response mode (spacebar, leftclick, touchscreen, clicktarget)
+
+  gParams <- CreateParameters(parpairs,gParamFile)
+  PrintProperties(gParams)
+
+  gWin <- MakeWindow("black")
+  InitializeLSL(gWin)  ## Initialize LSL outlet if --lsl flag was used
+
+  gSleepEasy <- 1
+
+   ##Get subject code if we need to:
+   if(gSubNum+""=="0")
+    {
+	  gSubNum <- GetSubNum(gWin)
+    }
+
+  GetStrings(gLanguage)
+
+  ## Specify semantic requirements for single-response go/no-go task
+  gParams.responsesemantics <- "gonogo"  ## Equivalent to ["response"]
+  gLayout <- CreateLayout("gonogo", gWin, gParams)
+
+  ## Show/hide cursor based on response mode
+  if(gParams.responsemode == "clicktarget" or gParams.responsemode == "leftclick" or gParams.responsemode == "touchscreen")
+  {
+    ShowCursor(1)  ## Show cursor for mouse modes
+  } else {
+    ShowCursor(0)  ## Hide cursor for keyboard modes
+  }
+
+  gLayout.header.visible <- 0
+  gLayout.subheader.visible <- 0
+  ## Keep footer visible to show response mode instruction (e.g., "Press spacebar to respond")
+
+  gFileOut <- GetNewDataFile(gSubNum,gWin,gParams.fileprefix,"csv",
+       "subnum,trial,type,freq,jitter,onset,clocktime,responded,rt,corr,outcome")
+  gSumFileOut <- GetNewDataFile(gSubNum,gWin,gParams.fileprefix+"-report","txt","")
+
+  gGoSound <- LoadSound("go_tone_500Hz.wav")
+  gNoGoSound <- LoadSound("nogo_tone_1500Hz.wav")
+
+  ## Sync GetTime() to the PC clock (beeps.pbl block; waits up to 1 s)
+  ToneClockSync()
+
+  nGo <- Floor(gParams.numtrials * gParams.gofraction)
+  nNoGo <- gParams.numtrials - nGo
+  trials <- MakeSequence(nGo, nNoGo, gParams.maxgorun, gParams.maxnogorun)
+
+  MessageKeyBox(gStrings.inst1 + CR(2) + gStrings.start)
+  CountDown(gWin)
+
+  results <- DoBlock(trials)
+
+  ##summarize
+  outcomes <- First(results)
+  rts <- Second(results)
+  hits <- Length(Filter(outcomes, Match(outcomes,"hit")))
+  misses <- Length(Filter(outcomes, Match(outcomes,"miss")))
+  fas <- Length(Filter(outcomes, Match(outcomes,"false_alarm")))
+  crs <- Length(Filter(outcomes, Match(outcomes,"correct_rejection")))
+  hitrts <- Filter(rts, Match(outcomes,"hit"))
+
+  FilePrint(gSumFileOut,"-----------------------------------------------")
+  FilePrint(gSumFileOut,"PEBL Auditory Go/No-Go Task")
+  FilePrint(gSumFileOut, GetPEBLVersion())
+  FilePrint(gSumFileOut, GetSystemType())
+  FilePrint(gSumFileOut,"-----------------------------------------------")
+  FilePrint(gSumFileOut, "Subject code: "+gSubNum)
+  FilePrint(gSumFileOut, "Time:         "+TimeStamp())
+  FilePrint(gSumFileOut, "Block start:  "+Third(results))
+  FilePrint(gSumFileOut, "Block end:    "+Fourth(results))
+  FilePrint(gSumFileOut, "Parameters:   trials="+gParams.numtrials+" go="+nGo+" nogo="+nNoGo+
+                         " maxgorun="+gParams.maxgorun+" maxnogorun="+gParams.maxnogorun+
+                         " tone="+gParams.tonedur+"ms window="+gParams.jittermin+"-"+gParams.jittermax+"ms"+
+                         " feedback="+gParams.feedback+" responsemode="+gParams.responsemode)
+  FilePrint(gSumFileOut,"-----------------------------------------------")
+  FilePrint(gSumFileOut,"Hits:                "+hits)
+  FilePrint(gSumFileOut,"Misses:              "+misses)
+  FilePrint(gSumFileOut,"False alarms:        "+fas)
+  FilePrint(gSumFileOut,"Correct rejections:  "+crs)
+  FilePrint(gSumFileOut,"Hit rate:            "+SafeRate(hits,nGo))
+  FilePrint(gSumFileOut,"False alarm rate:    "+SafeRate(fas,nNoGo))
+  FilePrint(gSumFileOut,"Accuracy:            "+SafeRate(hits+crs,gParams.numtrials))
+  if(Length(hitrts) > 0)
+  {
+    FilePrint(gSumFileOut,"Mean hit RT (ms):    "+Mean(hitrts))
+    FilePrint(gSumFileOut,"Median hit RT (ms):  "+Median(hitrts))
+  } else {
+    FilePrint(gSumFileOut,"Mean hit RT (ms):    NA")
+    FilePrint(gSumFileOut,"Median hit RT (ms):  NA")
+  }
+
+  ## Finalize LSL
+  FinalizeLSL()
+
+  ## Close files before upload (required for Windows file locking compatibility)
+  FileClose(gFileOut)
+  FileClose(gSumFileOut)
+
+  ## Upload data files (works online, no-op on native)
+  ## Note: .filename property persists after FileClose(), so this is safe
+  UploadFile(gSubnum,gFileOut.filename)
+  UploadFile(gSubnum,gSumFileOut.filename)
+
+  ##Debrief at the end.
+  MessageKeyBox(gStrings.debrief)
+}
+
+
+## Runs one continuous block. trials is a list of "go"/"nogo".
+## Returns [outcomes, rts, blockStartClock, blockEndClock]
+define DoBlock(trials)
+{
+  fixation <- EasyLabel("+", gLayout.centerX, gLayout.centerY, gWin, 60)
+  feedback <- EasyLabel(" ", gLayout.centerX, gLayout.centerY + 80, gWin, 30)
+  Hide(feedback)
+  Draw()
+
+  ## short silent lead-in with fixation before the first tone
+  Wait(1000)
+
+  outcomes <- []
+  rts <- []
+  startClock <- ToneClockTime(GetTime())
+  LSLMarker("block_start")
+
+  trial <- 1
+  loop(type, trials)
+  {
+    jitter <- gParams.jittermin + RandomDiscrete(gParams.jittermax - gParams.jittermin + 1) - 1
+    if(type == "go")
+    {
+      sound <- gGoSound
+      freq <- 500
+    } else {
+      sound <- gNoGoSound
+      freq <- 1500
+    }
+
+    t0 <- GetTime()
+    PlayBackground(sound)
+    LSLMarker(type + "_onset")
+    trialEnd <- t0 + gParams.tonedur + jitter
+
+    ## first response from tone onset until the end of the trial
+    resp <- "<timeout>"
+    remaining <- trialEnd - GetTime()
+    if(remaining > 0)
+    {
+      resp <- WaitForLayoutResponse(gLayout, remaining)
+    }
+    if(resp == "<timeout>")
+    {
+      responded <- 0
+      rt <- "NA"
+    } else {
+      responded <- 1
+      rt <- GetTime() - t0
+      LSLMarker("response")
+    }
+
+    if(type == "go")
+    {
+      corr <- responded
+      if(responded)
+      {
+        outcome <- "hit"
+      } else {
+        outcome <- "miss"
+      }
+    } else {
+      corr <- 1 - responded
+      if(responded)
+      {
+        outcome <- "false_alarm"
+      } else {
+        outcome <- "correct_rejection"
+      }
+    }
+
+    FilePrint(gFileOut, gSubNum+","+trial+","+type+","+freq+","+jitter+","+t0+","+
+                        ToneClockTime(t0)+","+responded+","+rt+","+corr+","+outcome)
+    outcomes <- Append(outcomes, outcome)
+    rts <- Append(rts, rt)
+
+    ##Give feedback after errors (practice only)
+    if(gParams.feedback and (not corr))
+    {
+      if(outcome == "miss")
+      {
+        feedback.text <- gStrings.feedback_miss
+      } else {
+        feedback.text <- gStrings.feedback_fa
+      }
+      Show(feedback)
+      Draw()
+      Wait(1000)
+      Hide(feedback)
+      Draw()
+    }
+
+    ## logging is done above, inside the window, so the next tone starts on time
+    WaitUntil(trialEnd)
+    trial <- trial + 1
+  }
+
+  LSLMarker("block_end")
+  endClock <- ToneClockTime(GetTime())
+  RemoveObject(fixation, gWin)
+  RemoveObject(feedback, gWin)
+  Draw()
+  return([outcomes, rts, startClock, endClock])
+}
+
+
+## Pseudorandom order of nGo "go" and nNoGo "nogo" trials with at most
+## maxGo Go and maxNoGo No-Go in a row. Each step picks a trial type at
+## random (weighted by how many of each remain), but only among the types
+## that keep the rest of the sequence possible; restarts if it gets stuck.
+define MakeSequence(nGo, nNoGo, maxGo, maxNoGo)
+{
+  seq <- []
+  attempts <- 0
+  done <- 0
+  while(not done)
+  {
+    attempts <- attempts + 1
+    if(attempts > 1000)
+    {
+      SignalFatalError("gonogo: cannot order " + nGo + " Go and " + nNoGo +
+                       " No-Go trials with at most " + maxGo + " Go and " + maxNoGo +
+                       " No-Go in a row. Change numtrials/gofraction/maxgorun/maxnogorun.")
+    }
+    seq <- []
+    nG <- nGo
+    nN <- nNoGo
+    last <- "none"
+    run <- 0
+    stuck <- 0
+    while((nG + nN > 0) and (not stuck))
+    {
+      if(last == "go")
+      {
+        runGo <- run + 1
+        runNo <- 1
+      } elseif(last == "nogo") {
+        runGo <- 1
+        runNo <- run + 1
+      } else {
+        runGo <- 1
+        runNo <- 1
+      }
+      okGo <- (nG > 0) and (runGo <= maxGo) and SequenceFeasible(nG-1, nN, "go", runGo, maxGo, maxNoGo)
+      okNo <- (nN > 0) and (runNo <= maxNoGo) and SequenceFeasible(nG, nN-1, "nogo", runNo, maxGo, maxNoGo)
+
+      if(okGo and okNo)
+      {
+        if(Random() < nG/(nG+nN))
+        {
+          pick <- "go"
+        } else {
+          pick <- "nogo"
+        }
+      } elseif(okGo) {
+        pick <- "go"
+      } elseif(okNo) {
+        pick <- "nogo"
+      } else {
+        pick <- "stuck"
+        stuck <- 1
+      }
+
+      if(pick == "go")
+      {
+        seq <- Append(seq, "go")
+        nG <- nG - 1
+        run <- runGo
+        last <- "go"
+      } elseif(pick == "nogo") {
+        seq <- Append(seq, "nogo")
+        nN <- nN - 1
+        run <- runNo
+        last <- "nogo"
+      }
+    }
+    if(not stuck)
+    {
+      done <- 1
+    }
+  }
+  return(seq)
+}
+
+
+## Can nG Go and nN No-Go trials still be placed, given the current run
+## (type last, length run) and the run limits?
+define SequenceFeasible(nG, nN, last, run, maxGo, maxNoGo)
+{
+  if(last == "go")
+  {
+    capGo <- (maxGo - run) + maxGo * nN
+    capNo <- maxNoGo * (nG + 1)
+  } else {
+    capGo <- maxGo * (nN + 1)
+    capNo <- (maxNoGo - run) + maxNoGo * nG
+  }
+  return((nG <= capGo) and (nN <= capNo))
+}
+
+
+define SafeRate(num, denom)
+{
+  if(denom > 0)
+  {
+    rate <- num / denom
+  } else {
+    rate <- "NA"
+  }
+  return(rate)
+}
+
+
+define GetStrings(lang)
+{
+  gStrings <- GetTranslations("gonogo", lang)
+}
+
+
+define MessageKeyBox(message)
+{
+  tb <- AdaptiveTextBox(message,100,100,gWin,24,gVideoWidth-200,gVideoHeight-200,"scalefont")
+  Draw()
+
+  ## Use Layout & Response System - spacebar mode accepts any spacebar press
+  WaitForLayoutResponse(gLayout)
+
+  RemoveObject(tb,gWin)
+  Draw()
+}
+
+
+define WaitUntil(time)
+{
+     RegisterEvent("<TIMER>", 1, time,"<GEQ>","", [])
+     StartEventLoop()  #Start the timer
+     ClearEventLoop()  #clear it out when done.
+}
+
+
+## UploadFile and SyncDataFile functions removed - using library versions from Utility.pbl
+## These functions are auto-loaded and support both token and username/password authentication
+
+
+## >>> BEGIN beeps.pbl (auto-copied, do not edit)
+##########################################################
+## beeps.pbl -- reusable pure-tone (sine wave) functions
+##
+## PEBL has no import statement, so this file is COPIED into each test
+## by my_studies/lib/sync-beeps.ps1. Edit only this master copy, then
+## re-run the sync script.
+##
+## Why not MakeSineWave()?  In this PEBL build (2.4, Windows) MakeSineWave()
+## returns a sound with no audio buffer: it plays for 0 ms. Instead, each
+## tone is written once to a .wav file (via a small PowerShell helper) in the
+## test's folder, e.g. tone-1000Hz-50ms-a0.8.wav, and loaded with LoadSound().
+## Later runs reuse the cached file, so the PowerShell call only happens the
+## first time a given frequency/duration/amplitude is requested.
+##
+## Functions:
+##   MakeTone(freq, durationMs, amplitude:0.8)
+##        Returns a sound object you can pass to PlayTone/PlayBackground.
+##        Call it early (e.g. during setup) to avoid the one-time ~0.3 s
+##        generation delay and the up-to-1 s clock sync (see below) at
+##        play time.
+##   PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+##        Plays a tone and returns its onset timestamp (GetTime(), ms).
+##        blocking=1 waits for the tone to finish (use it right before the
+##        script exits). Each play is recorded in gToneLog.
+##   Beep(label:"beep")
+##        Shortcut: 1000 Hz, 50 ms, amplitude 0.8, non-blocking.
+##   GetToneLog()
+##        List of [label, freq, durationMs, amplitude, timestamp, clocktime]
+##        for every tone played so far.
+##
+## timestamp comes from GetTime(), so it is on the same clock as the RTs and
+## abstime values PEBL tests already record.
+## clocktime is the PC's local clock time, "YYYY-MM-DD HH:MM:SS.mmm".
+## PEBL's TimeStamp() only has 1 s resolution (and GetTimeOfDay() returns a
+## broken value in this build), so on first use the library waits for the PC
+## clock's second to tick over (up to 1 s), records GetTime() at that instant,
+## and afterwards computes clock time = that second + elapsed GetTime().
+##########################################################
+
+define MakeTone(freq, durationMs, amplitude:0.8)
+{
+  ToneClockSync()
+  key <- freq + "Hz-" + durationMs + "ms-a" + amplitude
+
+  ## reuse an already-loaded sound
+  if(not VariableExists("gToneCache"))
+  {
+    gToneCache <- []
+  }
+  sound <- 0
+  loop(pair, gToneCache)
+  {
+    if(First(pair) == key)
+    {
+      sound <- Second(pair)
+    }
+  }
+
+  if(IsNumber(sound))
+  {
+    filename <- "tone-" + key + ".wav"
+    if(not FileExists(filename))
+    {
+      ToneWriteHelper()
+      cmd <- "powershell -NoProfile -ExecutionPolicy Bypass -File beeps-maketone.ps1" +
+             " -f " + freq + " -d " + durationMs + " -a " + amplitude + " -o " + filename
+      SystemCall(cmd, "")
+      if(not FileExists(filename))
+      {
+        SignalFatalError("beeps.pbl: could not create " + filename +
+                         " (PowerShell is required to generate tones)")
+      }
+    }
+    sound <- LoadSound(filename)
+    gToneCache <- Append(gToneCache, [key, sound])
+  }
+  return(sound)
+}
+
+
+define PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+{
+  sound <- MakeTone(freq, durationMs, amplitude)
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+
+  t <- GetTime()
+  if(blocking)
+  {
+    PlayForeground(sound)
+  } else {
+    PlayBackground(sound)
+  }
+
+  gToneLog <- Append(gToneLog, [label, freq, durationMs, amplitude, t, ToneClockTime(t)])
+  return(t)
+}
+
+
+define Beep(label:"beep")
+{
+  return(PlayTone(1000, 50, 0.8, 0, label))
+}
+
+
+## Syncs GetTime() to the PC clock once (waits up to 1 s the first time).
+## Returns [GetTime() at a whole second, that second as ms since midnight].
+define ToneClockSync()
+{
+  if(not VariableExists("gToneClockAnchor"))
+  {
+    ts0 <- TimeStamp()
+    ts <- ts0
+    while(ts == ts0)
+    {
+      ts <- TimeStamp()
+    }
+    t <- GetTime()
+    gToneClockAnchor <- [t, Nth(ToneParseTimeStamp(ts),4)*1000]
+  }
+  return(gToneClockAnchor)
+}
+
+
+## Converts a GetTime() value to PC local clock time "YYYY-MM-DD HH:MM:SS.mmm"
+define ToneClockTime(t)
+{
+  anchor <- ToneClockSync()
+  date <- ToneParseTimeStamp(TimeStamp())
+  ms <- Mod(Second(anchor) + t - First(anchor), 86400000)
+  clock <- Nth(date,1) + "-" + ZeroPad(Nth(date,2),2) + "-" + ZeroPad(Nth(date,3),2) + " " +
+           ZeroPad(Floor(ms/3600000),2) + ":" + ZeroPad(Floor(Mod(ms,3600000)/60000),2) + ":" +
+           ZeroPad(Floor(Mod(ms,60000)/1000),2) + "." + ZeroPad(Mod(ms,1000),3)
+  return(clock)
+}
+
+
+## Parses TimeStamp() text like "Fri Oct 09 20:31:36 2026"
+## into [year, month, day, seconds since midnight]
+define ToneParseTimeStamp(ts)
+{
+  tokens <- []
+  loop(tok, SplitString(ts, " "))
+  {
+    if(tok != "")
+    {
+      tokens <- Append(tokens, tok)
+    }
+  }
+  month <- 1
+  i <- 1
+  loop(name, ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+  {
+    if(name == Nth(tokens,2))
+    {
+      month <- i
+    }
+    i <- i + 1
+  }
+  hms <- SplitString(Nth(tokens,4), ":")
+  secs <- ToNumber(Nth(hms,1))*3600 + ToNumber(Nth(hms,2))*60 + ToNumber(Nth(hms,3))
+  return([ToNumber(Nth(tokens,5)), month, ToNumber(Nth(tokens,3)), secs])
+}
+
+
+define GetToneLog()
+{
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+  return(gToneLog)
+}
+
+
+## Writes the PowerShell WAV generator next to the test (once).
+## Output: 44.1 kHz, 16-bit, mono PCM sine wave.
+define ToneWriteHelper()
+{
+  helper <- "beeps-maketone.ps1"
+  if(not FileExists(helper))
+  {
+    ps <- FileOpenOverwrite(helper)
+    FilePrint(ps, "param([double]$f,[int]$d,[double]$a,[string]$o)")
+    FilePrint(ps, "$sr=44100; $n=[int]($sr*$d/1000); $ms=New-Object IO.MemoryStream; $w=New-Object IO.BinaryWriter($ms)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36+$n*2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))")
+    FilePrint(ps, "$w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr*2)); $w.Write([int16]2); $w.Write([int16]16)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n*2))")
+    FilePrint(ps, "for($i=0;$i -lt $n;$i++){ $w.Write([int16][Math]::Round(32767*$a*[Math]::Sin(2*[Math]::PI*$f*$i/$sr))) }")
+    FilePrint(ps, "$w.Flush(); [IO.File]::WriteAllBytes((Join-Path (Get-Location) $o),$ms.ToArray())")
+    FileClose(ps)
+  }
+  return(helper)
+}
+## <<< END beeps.pbl

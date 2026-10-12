@@ -1,0 +1,5 @@
+PEBL Auditory Go/No-Go Test: one continuous block (default 150 trials, ~3 minutes).
+Go tone = 500 Hz, No-Go tone = 1500 Hz (300 ms each), followed by a 600-800 ms jittered response window.
+Respond only to the Go tone. Pseudorandom order with at most 3 Go / 2 No-Go in a row (parameters).
+Adapted from the PEBL Go/No-Go test (Mueller, 2011), based on Bezdjian et al. (2009).
+Data are saved to gonogo\data\ ; tone onsets are sent as LSL markers when LSL is enabled.

@@ -1,0 +1,78 @@
+{
+  "test": "gonogo",
+  "version": "2.0",
+  "description": "Auditory Go/No-Go Test (500 Hz Go, 1500 Hz No-Go)",
+  "parameters": [
+    {
+      "name": "numtrials",
+      "type": "integer",
+      "default": 150,
+      "description": "Total number of trials in the block"
+    },
+    {
+      "name": "gofraction",
+      "type": "number",
+      "default": 0.75,
+      "description": "Proportion of Go trials (150 trials -> 112 Go / 38 No-Go)"
+    },
+    {
+      "name": "maxgorun",
+      "type": "integer",
+      "default": 3,
+      "description": "Maximum number of Go trials in a row"
+    },
+    {
+      "name": "maxnogorun",
+      "type": "integer",
+      "default": 2,
+      "description": "Maximum number of No-Go trials in a row"
+    },
+    {
+      "name": "tonedur",
+      "type": "integer",
+      "default": 300,
+      "description": "Tone duration in ms (must match the .wav files)"
+    },
+    {
+      "name": "jittermin",
+      "type": "integer",
+      "default": 600,
+      "description": "Minimum response window after the tone (ms)"
+    },
+    {
+      "name": "jittermax",
+      "type": "integer",
+      "default": 800,
+      "description": "Maximum response window after the tone (ms)"
+    },
+    {
+      "name": "feedback",
+      "type": "boolean",
+      "default": 0,
+      "description": "Show feedback after errors (for practice)",
+      "options": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "fileprefix",
+      "type": "string",
+      "default": "gonogo",
+      "description": "Name of the data files"
+    },
+    {
+      "name": "responsemode",
+      "type": "string",
+      "default": "spacebar",
+      "options": [
+        "spacebar",
+        "leftclick",
+        "touchscreen",
+        "clicktarget",
+        "userselect"
+      ],
+      "description": "Response mode: spacebar (keyboard), leftclick (mouse), touchscreen (touch), clicktarget (click target box), userselect (custom key)"
+    }
+  ]
+}

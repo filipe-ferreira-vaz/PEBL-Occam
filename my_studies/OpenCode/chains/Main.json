@@ -8,6 +8,20 @@
       "param_variant": "default",
       "random_group": 0,
       "test_name": "maze"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "gonogo-practice"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "gonogo"
     }
   ],
   "lsl_enabled": false,

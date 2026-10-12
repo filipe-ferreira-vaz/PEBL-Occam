@@ -2,7 +2,7 @@
   "author": "",
   "created_date": "2026-10-08T18:23:43Z",
   "description": "",
-  "modified_date": "2026-10-08T18:23:48Z",
+  "modified_date": "2026-10-09T19:53:39Z",
   "study_name": "OpenCode",
   "study_token": "",
   "tests": [
@@ -11,6 +11,44 @@
       "included": true,
       "test_name": "maze",
       "test_path": "maze"
+    },
+    {
+      "display_name": "gonogo-practice",
+      "included": true,
+      "test_name": "gonogo-practice",
+      "test_path": "gonogo-practice"
+    },
+    {
+      "display_name": "gonogo",
+      "included": true,
+      "parameter_variants": {
+        "clicktarget": {
+          "description": "Parameter set: clicktarget",
+          "file": "gonogo-clicktarget.par.json"
+        },
+        "leftclick": {
+          "description": "Parameter set: leftclick",
+          "file": "gonogo-leftclick.par.json"
+        },
+        "mouse": {
+          "description": "Parameter set: mouse",
+          "file": "gonogo-mouse.par.json"
+        },
+        "spacebar": {
+          "description": "Parameter set: spacebar",
+          "file": "gonogo-spacebar.par.json"
+        },
+        "touchscreen": {
+          "description": "Parameter set: touchscreen",
+          "file": "gonogo-touchscreen.par.json"
+        },
+        "userselect": {
+          "description": "Parameter set: userselect",
+          "file": "gonogo-userselect.par.json"
+        }
+      },
+      "test_name": "gonogo",
+      "test_path": "gonogo"
     }
   ],
   "upload_server_url": "",
