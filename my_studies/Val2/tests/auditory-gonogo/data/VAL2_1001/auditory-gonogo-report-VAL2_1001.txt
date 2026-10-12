@@ -1,0 +1,20 @@
+-----------------------------------------------
+PEBL Auditory Go/No-Go Task
+PEBL Version 2.4
+WINDOWS
+-----------------------------------------------
+Subject code: VAL2_1001
+Time:         Mon Oct 12 12:00:19 2026
+Block start:  2026-10-12 11:57:47.981
+Block end:    2026-10-12 12:00:19.721
+Parameters:   trials=150 go=112 nogo=38 maxgorun=3 maxnogorun=2 tone=300ms window=600-800ms feedback=0 responsemode=spacebar
+-----------------------------------------------
+Hits:                0
+Misses:              112
+False alarms:        0
+Correct rejections:  38
+Hit rate:            0
+False alarm rate:    0
+Accuracy:            0.253333
+Mean hit RT (ms):    NA
+Median hit RT (ms):  NA

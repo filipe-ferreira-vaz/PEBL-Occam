@@ -1,0 +1,7 @@
+Tower of London Test
+Mon Oct 12 11:09:07 2026
+Participant:          CLAU_1006
+Trials:               12
+Total moves:          46
+Minimum moves:        46
+Total time:           138.482

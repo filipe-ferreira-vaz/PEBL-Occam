@@ -1,0 +1,85 @@
+Maze ID: 19
+VAL2_1001 Mon Oct 12 11:56:40 2026
+Path succeeded? [1]
+optimal path length:      45
+number of moves:          41
+Participant path length:  39
+Planning Time:            1428
+Time to first move:       1696
+Solving Time:             9285
+Total time:               10981
+[1, 2, 3, 4, 5, 6, 21, 36, 37, 38, 37, 52, 53, 68, 69, 84, 99, 98, 113, 114, 129, 130, 145, 146, 147, 162, 177, 192, 191, 190, 189, 204, 205, 206, 221, 222, 223, 224, 225]
+-------------------------------------------
+
+
+
+
+
+Maze ID: 10
+VAL2_1001 Mon Oct 12 11:56:55 2026
+Path succeeded? [1]
+optimal path length:      47
+number of moves:          55
+Participant path length:  51
+Planning Time:            8
+Time to first move:       776
+Solving Time:             13358
+Total time:               14134
+[1, 2, 17, 18, 3, 4, 19, 20, 35, 36, 37, 52, 67, 68, 83, 98, 83, 68, 67, 52, 51, 52, 37, 22, 23, 38, 39, 40, 55, 56, 71, 72, 87, 86, 101, 102, 117, 116, 131, 130, 145, 160, 175, 176, 177, 178, 193, 194, 209, 210, 225]
+-------------------------------------------
+
+
+
+
+
+Maze ID: 9
+VAL2_1001 Mon Oct 12 11:57:08 2026
+Path succeeded? [1]
+optimal path length:      57
+number of moves:          47
+Participant path length:  45
+Planning Time:            293
+Time to first move:       831
+Solving Time:             11666
+Total time:               12497
+[1, 2, 3, 4, 19, 34, 33, 48, 63, 78, 79, 94, 109, 124, 125, 126, 111, 112, 113, 114, 115, 100, 99, 84, 85, 70, 71, 72, 87, 102, 103, 118, 117, 132, 147, 162, 163, 164, 165, 180, 195, 210, 209, 224, 225]
+-------------------------------------------
+
+
+
+
+
+Maze ID: 1
+VAL2_1001 Mon Oct 12 11:57:21 2026
+Path succeeded? [1]
+optimal path length:      49
+number of moves:          45
+Participant path length:  43
+Planning Time:            1639
+Time to first move:       1933
+Solving Time:             10673
+Total time:               12606
+[1, 2, 17, 18, 17, 16, 31, 46, 47, 48, 49, 50, 65, 80, 95, 96, 97, 112, 113, 98, 83, 68, 69, 70, 85, 100, 101, 102, 103, 118, 133, 134, 149, 148, 163, 178, 179, 194, 193, 208, 223, 224, 225]
+-------------------------------------------
+
+
+
+
+
+Maze ID: 13
+VAL2_1001 Mon Oct 12 11:57:35 2026
+Path succeeded? [1]
+optimal path length:      55
+number of moves:          48
+Participant path length:  47
+Planning Time:            509
+Time to first move:       716
+Solving Time:             12337
+Total time:               13053
+[1, 16, 31, 32, 47, 62, 63, 64, 79, 94, 109, 110, 95, 110, 125, 124, 139, 154, 169, 184, 185, 200, 201, 186, 171, 156, 157, 158, 143, 144, 145, 146, 147, 146, 145, 144, 159, 160, 161, 176, 191, 206, 207, 208, 223, 224, 225]
+-------------------------------------------
+
+
+
+
+

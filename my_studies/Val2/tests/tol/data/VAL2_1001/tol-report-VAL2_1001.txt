@@ -1,0 +1,7 @@
+Tower of London Test
+Mon Oct 12 11:54:49 2026
+Participant:          VAL2_1001
+Trials:               12
+Total moves:          46
+Minimum moves:        46
+Total time:           98.454
