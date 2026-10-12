@@ -1,0 +1,40 @@
+----------------------------------------------
+Target   color    X   present  size   Mean(RT)   Mean(acc)
+----------------------------------------------
+O  green   115  1  20  115  0
+O  green   192  1  10  192  1
+O  green   242  0  30  242  0
+O  green   243  5  20  243  1
+O  green   247  5  10  247  1
+O  green   251  1  30  251  0
+O  green   312  0  20  312  0
+O  green   361  0  10  361  0
+O  green   942  5  30  942  1
+O  white   249  0  10  249  0
+O  white   249  1  20  249  0
+O  white   284  1  10  284  0
+O  white   285  0  30  285  0
+O  white   290  5  30  290  0
+O  white   329  0  20  329  0
+O  white   372  5  20  372  1
+O  white   405  1  30  405  0
+O  white   478  5  10  478  1
+X  green   226  0  30  226  0
+X  green   243  5  30  243  1
+X  green   257  1  20  257  0
+X  green   265  1  10  265  0
+X  green   278  5  20  278  1
+X  green   284  0  20  284  0
+X  green   412  0  10  412  0
+X  green   785  5  10  785  1
+X  green   84  1  30  84  0
+X  white   13  1  20  13  0
+X  white   131  5  30  131  0
+X  white   227  5  20  227  1
+X  white   293  0  20  293  0
+X  white   308  5  10  308  1
+X  white   350  1  30  350  1
+X  white   37  0  30  37  0
+X  white   839  1  10  839  1
+X  white   86  0  10  86  0
+----------------------------------------------
