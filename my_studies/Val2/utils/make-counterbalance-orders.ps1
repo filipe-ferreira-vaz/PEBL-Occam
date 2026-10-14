@@ -1,13 +1,13 @@
 # Writes the hardcoded, counterbalanced task order of every participant code
-# of a study: one row per possible order of its tests (7 tests -> 7! = 5040
-# rows, PART_0001 .. PART_5040).
+# of the study this utils folder is in: one row per possible order of its tests
+# (7 tests -> 7! = 5040 rows, PART_0001 .. PART_5040).
 #
 # Usage (from anywhere):
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/make-counterbalance-orders.ps1
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/make-counterbalance-orders.ps1 -Study Val2 -Force
+#   powershell -ExecutionPolicy Bypass -File my_studies/<Study>/utils/make-counterbalance-orders.ps1
+#   powershell -ExecutionPolicy Bypass -File my_studies/<Study>/utils/make-counterbalance-orders.ps1 -Force
 #
-# Tests are the included tests of my_studies/<Study>/study-info.json, in order.
-# Output: my_studies/<Study>/counterbalance/task-orders.csv
+# Tests are the included tests of <Study>/study-info.json, in order.
+# Output: <Study>/counterbalance/task-orders.csv
 #   participant_code,task1,task2,...,taskN
 #
 # Counterbalancing: rotating an order (abcdefg -> bcdefga -> ...) splits all
@@ -21,7 +21,6 @@
 # unless -Force is given, so orders already handed out stay the same.
 
 param(
-  [string]$Study = 'Val2',
   [string]$Prefix = 'PART',
   [int]$Seed = 20261014,
   [string]$OutFile,
@@ -29,8 +28,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$studiesDir = Split-Path $PSScriptRoot -Parent
-$studyDir   = Join-Path $studiesDir $Study
+$studyDir = Split-Path $PSScriptRoot -Parent
+$Study    = Split-Path $studyDir -Leaf
+if (-not (Test-Path (Join-Path $studyDir 'study-info.json'))) {
+  throw "No study-info.json in $studyDir. Put utils inside a study folder."
+}
 if (-not $OutFile) { $OutFile = Join-Path $studyDir 'counterbalance\task-orders.csv' }
 
 if ((Test-Path $OutFile) -and -not $Force) {

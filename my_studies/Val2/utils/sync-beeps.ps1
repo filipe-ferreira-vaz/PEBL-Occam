@@ -1,12 +1,11 @@
-# Adds the beeps library (my_studies/lib/beeps.pbl) and the standard start/end
-# beeps to every test of a study, and keeps them up to date.
+# Adds the beeps library (utils/beeps.pbl) and the standard start/end beeps to
+# every test of the study this utils folder is in, and keeps them up to date.
+# Copy the whole utils folder into any study (my_studies/<Study>/utils) to use it there.
 #
-# Usage (from my_studies or anywhere):
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/sync-beeps.ps1
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/sync-beeps.ps1 -Study Occam
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/sync-beeps.ps1 -Study OpenCode,Occam
+# Usage (from anywhere):
+#   powershell -ExecutionPolicy Bypass -File my_studies/<Study>/utils/sync-beeps.ps1
 #
-# For each test (my_studies/<Study>/tests/<test>/*.pbl) it:
+# For each test (<Study>/tests/<test>/*.pbl) it:
 #   1. appends these marker lines at the end of the file, if missing:
 #        ## >>> BEGIN beeps.pbl (auto-copied, do not edit)
 #        ## <<< END beeps.pbl
@@ -16,8 +15,8 @@
 #        BeepsEnd()    before the FinalizeLSL() line      (test finished)
 #      Every PEBL 2.4 test has both lines; if one is missing it prints a warning.
 #
-# Files elsewhere under my_studies that already contain the markers are also
-# refreshed (step 2 and 3), whatever study they are in.
+# Other files in the study (outside utils and data folders) that already contain
+# the markers are also refreshed (step 2 and 3).
 #
 # To keep a test silent, put this line anywhere in it (outside the library block):
 #   ## beeps: no auto calls
@@ -25,11 +24,9 @@
 #
 # Running the script again changes nothing unless beeps.pbl or the tests changed.
 
-param([string[]]$Study = @('Val'))
-
 $ErrorActionPreference = 'Stop'
 $libDir     = $PSScriptRoot
-$studiesDir = Split-Path $libDir -Parent
+$studyDir   = Split-Path $libDir -Parent
 $begin      = '## >>> BEGIN beeps.pbl (auto-copied, do not edit)'
 $end        = '## <<< END beeps.pbl'
 $tag        = '## auto-added by sync-beeps.ps1'
@@ -58,15 +55,13 @@ function Add-Call($text, $anchor, $call, [switch]$Before, $file) {
 
 # Test files of the selected studies: the .pbl files directly inside each test folder
 $targets = @{}
-foreach ($s in $Study) {
-  $testsDir = Join-Path (Join-Path $studiesDir $s) 'tests'
-  if (-not (Test-Path $testsDir)) { Write-Warning "No tests folder for study '$s' ($testsDir)"; continue }
-  Get-ChildItem -Path $testsDir -Directory | ForEach-Object {
-    Get-ChildItem -Path $_.FullName -Filter *.pbl -File | ForEach-Object { $targets[$_.FullName] = $true }
-  }
+$testsDir = Join-Path $studyDir 'tests'
+if (-not (Test-Path $testsDir)) { throw "No tests folder in $studyDir. Put utils inside a study folder." }
+Get-ChildItem -Path $testsDir -Directory | ForEach-Object {
+  Get-ChildItem -Path $_.FullName -Filter *.pbl -File | ForEach-Object { $targets[$_.FullName] = $true }
 }
-# ...plus any file under my_studies that already has the markers
-Get-ChildItem -Path $studiesDir -Recurse -Filter *.pbl -File |
+# ...plus any other file in the study that already has the markers
+Get-ChildItem -Path $studyDir -Recurse -Filter *.pbl -File |
   Where-Object { -not $_.FullName.StartsWith($libDir) -and $_.FullName -notmatch '\\data\\' } |
   ForEach-Object {
     if ([IO.File]::ReadAllText($_.FullName).Contains($begin)) { $targets[$_.FullName] = $true }

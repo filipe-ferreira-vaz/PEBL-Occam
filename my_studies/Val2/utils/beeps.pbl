@@ -2,7 +2,7 @@
 ## beeps.pbl -- reusable pure-tone (sine wave) functions
 ##
 ## PEBL has no import statement, so this file is COPIED into each test
-## by my_studies/lib/sync-beeps.ps1. Edit only this master copy, then
+## by <study>/utils/sync-beeps.ps1. Edit only this master copy, then
 ## re-run the sync script.
 ##
 ## Standard start/end beeps: the sync script also inserts

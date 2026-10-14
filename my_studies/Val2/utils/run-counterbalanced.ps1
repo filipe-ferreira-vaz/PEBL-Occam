@@ -1,25 +1,25 @@
-# Runs a study's tests for one participant, in that participant's hardcoded
-# counterbalanced order (my_studies/<Study>/counterbalance/task-orders.csv,
-# made by make-counterbalance-orders.ps1).
+# Runs the tests of the study this utils folder is in for one participant, in
+# that participant's hardcoded counterbalanced order
+# (<Study>/counterbalance/task-orders.csv, made by make-counterbalance-orders.ps1).
 #
-# Usage (or double-click my_studies/<Study>/run-participant.bat):
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/run-counterbalanced.ps1
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/run-counterbalanced.ps1 -Participant PART_0042 -Fullscreen
-#   powershell -ExecutionPolicy Bypass -File my_studies/lib/run-counterbalanced.ps1 -Participant PART_0042 -StartAt 4
+# Usage (or double-click <Study>/run-participant.bat):
+#   powershell -ExecutionPolicy Bypass -File my_studies/<Study>/utils/run-counterbalanced.ps1
+#   powershell -ExecutionPolicy Bypass -File my_studies/<Study>/utils/run-counterbalanced.ps1 -Participant PART_0042 -Fullscreen
+#   powershell -ExecutionPolicy Bypass -File my_studies/<Study>/utils/run-counterbalanced.ps1 -Participant PART_0042 -StartAt 4
 #
 # For the participant code (asked for if not given) it:
-#   1. writes the chain my_studies/<Study>/chains/<code>.json (also usable in
-#      the PEBL launcher)
+#   1. writes the chain <Study>/chains/<code>.json (also usable in the PEBL
+#      launcher)
 #   2. runs each test like the launcher does:
 #        pebl2.exe tests/<test>/<test>.pbl -s <code> --language <lang> [--pfile ...] [--fullscreen]
 #      from the test's folder, so data goes to tests/<test>/data/<code>/
-#   3. adds a row per test to logs/launcher-log.csv
+#   3. adds a row per test to logs/launcher-log.csv of the PEBL workspace the
+#      study is in (the first parent folder with settings/launcher.cfg), if any
 #
 # -StartAt N skips the first N-1 tests (to resume after a crash).
 # -DryRun writes the chain and prints the commands without running anything.
 
 param(
-  [string]$Study = 'Val2',
   [string]$Participant,
   [string]$Language = 'en',
   [switch]$Fullscreen,
@@ -28,20 +28,25 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$studiesDir   = Split-Path $PSScriptRoot -Parent
-$workspaceDir = Split-Path $studiesDir -Parent
-$studyDir     = Join-Path $studiesDir $Study
-$ordersFile   = Join-Path $studyDir 'counterbalance\task-orders.csv'
+$studyDir   = Split-Path $PSScriptRoot -Parent
+$Study      = Split-Path $studyDir -Leaf
+$ordersFile = Join-Path $studyDir 'counterbalance\task-orders.csv'
+
+# PEBL workspace: first parent of the study with settings/launcher.cfg
+$workspaceDir = Split-Path $studyDir -Parent
+while ($workspaceDir -and -not (Test-Path (Join-Path $workspaceDir 'settings\launcher.cfg'))) {
+  $workspaceDir = Split-Path $workspaceDir -Parent
+}
 
 # pebl2.exe: from the launcher settings, else the default install folder
 $pebl = 'C:\Program Files (x86)\PEBL2\bin\pebl2.exe'
-$cfg = Join-Path $workspaceDir 'settings\launcher.cfg'
-if (Test-Path $cfg) {
+if ($workspaceDir) {
+  $cfg = Join-Path $workspaceDir 'settings\launcher.cfg'
   $line = Select-String -Path $cfg -Pattern '^pebl_executable_path=(.+)$' | Select-Object -First 1
   if ($line) { $pebl = $line.Matches[0].Groups[1].Value.Trim() }
 }
 if (-not $DryRun -and -not (Test-Path $pebl)) { throw "pebl2.exe not found at $pebl" }
-if (-not (Test-Path $ordersFile)) { throw "$ordersFile not found. Run make-counterbalance-orders.ps1 -Study $Study first." }
+if (-not (Test-Path $ordersFile)) { throw "$ordersFile not found. Run utils\make-counterbalance-orders.ps1 first." }
 
 $orders = @{}
 foreach ($row in (Import-Csv $ordersFile)) { $orders[$row.participant_code] = $row }
@@ -97,7 +102,7 @@ for ($i = 0; $i -lt $tests.Count; $i++) {
 }
 Write-Host ""
 
-$log = Join-Path $workspaceDir 'logs\launcher-log.csv'
+$log = if ($workspaceDir) { Join-Path $workspaceDir 'logs\launcher-log.csv' } else { $null }
 if (-not $DryRun) { Read-Host 'Press Enter to start' | Out-Null }
 
 for ($i = $StartAt - 1; $i -lt $tests.Count; $i++) {
@@ -117,7 +122,7 @@ for ($i = $StartAt - 1; $i -lt $tests.Count; $i++) {
 
   $fs = if ($Fullscreen) { 'true' } else { 'false' }
   $entry = '{0},"{1}","{2}","{3}",{4},{5},{6}' -f $start.ToString('yyyy-MM-dd HH:mm:ss'), $file, $Participant, $item.language, $fs, $p.ExitCode, $secs
-  [IO.File]::AppendAllText($log, "$entry`r`n", $utf8NoBom)
+  if ($log) { [IO.File]::AppendAllText($log, "$entry`r`n", $utf8NoBom) }
 }
 
 Write-Host ""
