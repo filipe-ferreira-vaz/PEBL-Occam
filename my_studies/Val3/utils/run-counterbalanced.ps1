@@ -16,6 +16,12 @@
 #   3. adds a row per test to logs/launcher-log.csv of the PEBL workspace the
 #      study is in (the first parent folder with settings/launcher.cfg), if any
 #
+# Before each test (and after the last one) it waits for a command:
+#   Enter  start the next test (or finish)
+#   b      go back to the previous test, e.g. if its window was closed by
+#          accident (type b again to go back further)
+#   q      quit (prints the -StartAt command to continue later)
+#
 # -StartAt N skips the first N-1 tests (to resume after a crash).
 # -DryRun writes the chain and prints the commands without running anything.
 
@@ -103,9 +109,51 @@ for ($i = 0; $i -lt $tests.Count; $i++) {
 Write-Host ""
 
 $log = if ($workspaceDir) { Join-Path $workspaceDir 'logs\launcher-log.csv' } else { $null }
-if (-not $DryRun) { Read-Host 'Press Enter to start' | Out-Null }
 
-for ($i = $StartAt - 1; $i -lt $tests.Count; $i++) {
+# Asks what to do before test $i (or, with $i = number of tests, before
+# finishing). Returns 'go', 'back' or 'quit'.
+function Read-NextStep($i) {
+  while ($true) {
+    Write-Host ""
+    if ($i -lt $tests.Count) {
+      Write-Host ("Next: [{0}/{1}] {2}" -f ($i + 1), $tests.Count, $tests[$i]) -ForegroundColor Cyan
+      $help = '  Enter = start it'
+    } else {
+      Write-Host "All $($tests.Count) tests done." -ForegroundColor Cyan
+      $help = '  Enter = finish'
+    }
+    if ($i -gt 0) { $help += "   b = go back to the previous test ($($tests[$i - 1]))" }
+    $help += '   q = quit'
+    Write-Host $help
+    $answer = "$(Read-Host '  >')".Trim().ToLower()
+    if ($answer -eq '') { return 'go' }
+    if ($answer -eq 'b' -or $answer -eq 'back') {
+      if ($i -gt 0) { return 'back' }
+      Write-Host '  This is the first test; there is no previous one.' -ForegroundColor Yellow
+    } elseif ($answer -eq 'q' -or $answer -eq 'quit') {
+      return 'quit'
+    } else {
+      Write-Host "  Unknown command '$answer'. Type b, q, or just press Enter." -ForegroundColor Yellow
+    }
+  }
+}
+
+# Each run of a test (also a repeated one) is logged; tests write their data to
+# tests/<test>/data/<code>/ again, so check which files belong to the repeat.
+$i = $StartAt - 1
+while ($true) {
+  if (-not $DryRun) {
+    $step = Read-NextStep $i
+    if ($step -eq 'back') { $i--; continue }
+    if ($step -eq 'quit') {
+      Write-Host ""
+      Write-Host "Stopped before test $($i + 1) of $($tests.Count). To continue later:" -ForegroundColor Yellow
+      Write-Host "  run-participant.bat -Participant $Participant -StartAt $($i + 1)"
+      return
+    }
+  }
+  if ($i -ge $tests.Count) { break }
+
   $item = $chain.items[$i]
   $file = Get-TestFile $item.test_name
   $peblArgs = @("`"$file`"", '-s', $Participant, '--language', $item.language)
@@ -113,7 +161,7 @@ for ($i = $StartAt - 1; $i -lt $tests.Count; $i++) {
   if ($Fullscreen) { $peblArgs += '--fullscreen' }
 
   Write-Host ("[{0}/{1}] {2}" -f ($i + 1), $tests.Count, $item.test_name)
-  if ($DryRun) { Write-Host "  cd `"$(Split-Path $file -Parent)`"; & `"$pebl`" $($peblArgs -join ' ')"; continue }
+  if ($DryRun) { Write-Host "  cd `"$(Split-Path $file -Parent)`"; & `"$pebl`" $($peblArgs -join ' ')"; $i++; continue }
 
   $start = Get-Date
   $p = Start-Process -FilePath $pebl -ArgumentList $peblArgs -WorkingDirectory (Split-Path $file -Parent) -Wait -PassThru
@@ -123,6 +171,7 @@ for ($i = $StartAt - 1; $i -lt $tests.Count; $i++) {
   $fs = if ($Fullscreen) { 'true' } else { 'false' }
   $entry = '{0},"{1}","{2}","{3}",{4},{5},{6}' -f $start.ToString('yyyy-MM-dd HH:mm:ss'), $file, $Participant, $item.language, $fs, $p.ExitCode, $secs
   if ($log) { [IO.File]::AppendAllText($log, "$entry`r`n", $utf8NoBom) }
+  $i++
 }
 
 Write-Host ""

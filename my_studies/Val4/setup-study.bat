@@ -12,6 +12,11 @@ exit /b
 #
 # Drop this file into a study folder (my_studies/<Study>, next to its tests
 # folder) and double-click it. It:
+#   0. updates tests from the test library (my_studies/test-library, next to
+#      the study folders): for every test folder in tests/ that also exists in
+#      the library, the library's files (e.g. the .pbl and its English
+#      translation, with the practice screens and other study changes) replace
+#      the study's copies. Other tests are left as they are.
 #   1. writes utils/beeps.pbl (if missing) and adds the beeps library plus the
 #      standard start/end beeps to every test in tests/ (same as sync-beeps.ps1:
 #      BeepsStart() after InitializeLSL(...), BeepsEnd() before FinalizeLSL())
@@ -20,7 +25,12 @@ exit /b
 #   3. writes the participant order file counterbalance/task-orders.csv
 #      (participant_code,task1,...,taskN)
 #   4. writes run-participant.bat (+ utils/run-participant.ps1), which asks for
-#      a participant code and runs that participant's chain
+#      a participant code and runs that participant's chain. Before each test
+#      it waits for a command: Enter = next test, b = go back to the previous
+#      test (e.g. its window was closed by accident), q = quit
+#      It also writes run-test.bat (+ utils/run-test.ps1): asks for a
+#      participant code, then lists all tests to run one at a time
+#      (number = run that test, q = quit)
 #
 # Tests are the folders in tests/, sorted by name. The .pbl file of a folder is
 # the one named like the folder (any case; tol/TOL.pbl -> test "tol/TOL"),
@@ -41,12 +51,14 @@ exit /b
 #   setup-study.bat -Prefix SUBJ      code prefix (default PART -> PART_0001)
 #   setup-study.bat -Seed 123         another (reproducible) shuffle
 #   setup-study.bat -Language pt      language written into the chains (default en)
+#   setup-study.bat -Library D:\lib   use another test library folder
 # To keep a test silent, put this line in it:  ## beeps: no auto calls
 
 param(
   [string]$Prefix = 'PART',
   [int]$Seed = 20261014,
   [string]$Language = 'en',
+  [string]$Library,
   [switch]$Force
 )
 
@@ -330,6 +342,12 @@ $runnerPs1 = @'
 # from the test's folder, so data goes to tests/<test>/data/<code>/. A row per
 # test is added to logs/launcher-log.csv of the PEBL workspace (the first
 # parent folder with settings/launcher.cfg), if there is one.
+#
+# Before each test (and after the last one) it waits for a command:
+#   Enter  start the next test (or finish)
+#   b      go back to the previous test, e.g. if its window was closed by
+#          accident (type b again to go back further)
+#   q      quit (prints the -StartAt command to continue later)
 
 param(
   [string]$Participant,
@@ -395,9 +413,51 @@ for ($i = 0; $i -lt $items.Count; $i++) {
 Write-Host ""
 
 $log = if ($workspaceDir) { Join-Path $workspaceDir 'logs\launcher-log.csv' } else { $null }
-if (-not $DryRun) { Read-Host 'Press Enter to start' | Out-Null }
 
-for ($i = $StartAt - 1; $i -lt $items.Count; $i++) {
+# Asks what to do before test $i (or, with $i = number of tests, before
+# finishing). Returns 'go', 'back' or 'quit'.
+function Read-NextStep($i) {
+  while ($true) {
+    Write-Host ""
+    if ($i -lt $items.Count) {
+      Write-Host ("Next: [{0}/{1}] {2}" -f ($i + 1), $items.Count, $items[$i].test_name) -ForegroundColor Cyan
+      $help = '  Enter = start it'
+    } else {
+      Write-Host "All $($items.Count) tests done." -ForegroundColor Cyan
+      $help = '  Enter = finish'
+    }
+    if ($i -gt 0) { $help += "   b = go back to the previous test ($($items[$i - 1].test_name))" }
+    $help += '   q = quit'
+    Write-Host $help
+    $answer = "$(Read-Host '  >')".Trim().ToLower()
+    if ($answer -eq '') { return 'go' }
+    if ($answer -eq 'b' -or $answer -eq 'back') {
+      if ($i -gt 0) { return 'back' }
+      Write-Host '  This is the first test; there is no previous one.' -ForegroundColor Yellow
+    } elseif ($answer -eq 'q' -or $answer -eq 'quit') {
+      return 'quit'
+    } else {
+      Write-Host "  Unknown command '$answer'. Type b, q, or just press Enter." -ForegroundColor Yellow
+    }
+  }
+}
+
+# Each run of a test (also a repeated one) is logged; tests write their data to
+# tests/<test>/data/<code>/ again, so check which files belong to the repeat.
+$i = $StartAt - 1
+while ($true) {
+  if (-not $DryRun) {
+    $step = Read-NextStep $i
+    if ($step -eq 'back') { $i--; continue }
+    if ($step -eq 'quit') {
+      Write-Host ""
+      Write-Host "Stopped before test $($i + 1) of $($items.Count). To continue later:" -ForegroundColor Yellow
+      Write-Host "  run-participant.bat -Participant $Participant -StartAt $($i + 1)"
+      return
+    }
+  }
+  if ($i -ge $items.Count) { break }
+
   $item = $items[$i]
   $file = Get-TestFile $item.test_name
   $peblArgs = @("`"$file`"", '-s', $Participant, '--language', $item.language)
@@ -405,7 +465,7 @@ for ($i = $StartAt - 1; $i -lt $items.Count; $i++) {
   if ($Fullscreen) { $peblArgs += '--fullscreen' }
 
   Write-Host ("[{0}/{1}] {2}" -f ($i + 1), $items.Count, $item.test_name)
-  if ($DryRun) { Write-Host "  cd `"$(Split-Path $file -Parent)`"; & `"$pebl`" $($peblArgs -join ' ')"; continue }
+  if ($DryRun) { Write-Host "  cd `"$(Split-Path $file -Parent)`"; & `"$pebl`" $($peblArgs -join ' ')"; $i++; continue }
 
   $start = Get-Date
   $p = Start-Process -FilePath $pebl -ArgumentList $peblArgs -WorkingDirectory (Split-Path $file -Parent) -Wait -PassThru
@@ -417,10 +477,129 @@ for ($i = $StartAt - 1; $i -lt $items.Count; $i++) {
     $entry = '{0},"{1}","{2}","{3}",{4},{5},{6}' -f $start.ToString('yyyy-MM-dd HH:mm:ss'), $file, $Participant, $item.language, $fs, $p.ExitCode, $secs
     [IO.File]::AppendAllText($log, "$entry`r`n", $utf8NoBom)
   }
+  $i++
 }
 
 Write-Host ""
 if ($DryRun) { Write-Host 'Dry run: nothing was launched.' } else { Write-Host "All tests done for $Participant." }
+'@
+
+# utils/run-test.ps1: rewritten on every run
+$runTestPs1 = @'
+# Runs single tests of this study for one participant, picked from a menu.
+# Use it to run (or re-run) one test outside the counterbalanced chain.
+#
+# Usage: double-click run-test.bat in the study folder, or
+#   run-test.bat -Participant PART_0042 -Fullscreen
+#   run-test.bat -Participant PART_0042 -Language pt
+#
+# It asks for the participant code (data is saved under it), then lists every
+# test in tests/:
+#   number  run that test, then come back to the list
+#   q       quit
+# Tests that already have data for this participant are marked "(has data)".
+#
+# Tests are the folders in tests/, sorted by name; the .pbl file of a folder is
+# the one named like the folder (any case), otherwise its only .pbl file.
+# Each test runs like the PEBL launcher runs it:
+#   pebl2.exe tests/<test>/<test>.pbl -s <code> --language <lang> [--fullscreen]
+# from the test's folder, so data goes to tests/<test>/data/<code>/. A row per
+# run is added to logs/launcher-log.csv of the PEBL workspace (the first parent
+# folder with settings/launcher.cfg), if there is one.
+
+param(
+  [string]$Participant,
+  [string]$Language = 'en',
+  [switch]$Fullscreen
+)
+
+$ErrorActionPreference = 'Stop'
+$studyDir   = Split-Path $PSScriptRoot -Parent
+$Study      = Split-Path $studyDir -Leaf
+$testsDir   = Join-Path $studyDir 'tests'
+$ordersFile = Join-Path $studyDir 'counterbalance\task-orders.csv'
+$utf8NoBom  = New-Object System.Text.UTF8Encoding($false)
+
+# PEBL workspace: first parent of the study with settings/launcher.cfg
+$workspaceDir = Split-Path $studyDir -Parent
+while ($workspaceDir -and -not (Test-Path (Join-Path $workspaceDir 'settings\launcher.cfg'))) {
+  $workspaceDir = Split-Path $workspaceDir -Parent
+}
+
+# pebl2.exe: from the launcher settings, else the default install folder
+$pebl = 'C:\Program Files (x86)\PEBL2\bin\pebl2.exe'
+if ($workspaceDir) {
+  $line = Select-String -Path (Join-Path $workspaceDir 'settings\launcher.cfg') -Pattern '^pebl_executable_path=(.+)$' | Select-Object -First 1
+  if ($line) { $pebl = $line.Matches[0].Groups[1].Value.Trim() }
+}
+if (-not (Test-Path $pebl)) { throw "pebl2.exe not found at $pebl" }
+$log = if ($workspaceDir) { Join-Path $workspaceDir 'logs\launcher-log.csv' } else { $null }
+
+# Tests in tests/
+if (-not (Test-Path $testsDir)) { throw "No tests folder in $studyDir." }
+$tests = @()
+foreach ($dir in (Get-ChildItem -Path $testsDir -Directory | Sort-Object Name)) {
+  $pbls = @(Get-ChildItem -Path $dir.FullName -Filter *.pbl -File)
+  $pbl = $pbls | Where-Object { $_.BaseName -eq $dir.Name } | Select-Object -First 1
+  if (-not $pbl -and $pbls.Count -eq 1) { $pbl = $pbls[0] }
+  if (-not $pbl) { continue }
+  $name = if ($pbl.BaseName -ceq $dir.Name) { $dir.Name } else { "$($dir.Name)/$($pbl.BaseName)" }
+  $tests += [pscustomobject]@{ Name = $name; File = $pbl.FullName; Dir = $dir.FullName }
+}
+if ($tests.Count -eq 0) { throw "No tests found in $testsDir." }
+
+# Participant code: listed in task-orders.csv if the study has one, else any CODE_1234
+$known = $null
+if (Test-Path $ordersFile) {
+  $known = New-Object 'System.Collections.Generic.HashSet[string]'
+  foreach ($l in ([IO.File]::ReadAllLines($ordersFile) | Select-Object -Skip 1)) { if ($l) { [void]$known.Add($l.Split(',')[0]) } }
+}
+while ($true) {
+  if (-not $Participant) { $Participant = Read-Host 'Participant code' }
+  $Participant = $Participant.Trim().ToUpper()
+  if ($Participant -match '^[A-Z0-9]+_\d+$' -and (-not $known -or $known.Contains($Participant))) { break }
+  if ($known) { Write-Host "  '$Participant' is not in counterbalance\task-orders.csv." -ForegroundColor Yellow }
+  else { Write-Host "  '$Participant' is not a valid code (e.g. PART_0001)." -ForegroundColor Yellow }
+  $Participant = $null
+}
+
+while ($true) {
+  Write-Host ""
+  Write-Host "Participant $Participant  ($Study): choose a test" -ForegroundColor Cyan
+  for ($i = 0; $i -lt $tests.Count; $i++) {
+    $hasData = Test-Path (Join-Path $tests[$i].Dir "data\$Participant")
+    $mark = if ($hasData) { '  (has data)' } else { '' }
+    Write-Host ("  {0,2}. {1}{2}" -f ($i + 1), $tests[$i].Name, $mark)
+  }
+  Write-Host "  1-$($tests.Count) = run that test   q = quit"
+  $answer = "$(Read-Host '  >')".Trim().ToLower()
+
+  if ($answer -eq 'q' -or $answer -eq 'quit') { break }
+  $num = 0
+  if (-not [int]::TryParse($answer, [ref]$num) -or $num -lt 1 -or $num -gt $tests.Count) {
+    Write-Host "  Unknown choice '$answer'. Type a number from 1 to $($tests.Count), or q." -ForegroundColor Yellow
+    continue
+  }
+
+  $t = $tests[$num - 1]
+  $peblArgs = @("`"$($t.File)`"", '-s', $Participant, '--language', $Language)
+  if ($Fullscreen) { $peblArgs += '--fullscreen' }
+  Write-Host ""
+  Write-Host "Running $($t.Name)..."
+  $start = Get-Date
+  $p = Start-Process -FilePath $pebl -ArgumentList $peblArgs -WorkingDirectory $t.Dir -Wait -PassThru
+  $secs = [int]((Get-Date) - $start).TotalSeconds
+  Write-Host "  finished (exit code $($p.ExitCode), $secs s)"
+
+  if ($log) {
+    $fs = if ($Fullscreen) { 'true' } else { 'false' }
+    $entry = '{0},"{1}","{2}","{3}",{4},{5},{6}' -f $start.ToString('yyyy-MM-dd HH:mm:ss'), $t.File, $Participant, $Language, $fs, $p.ExitCode, $secs
+    [IO.File]::AppendAllText($log, "$entry`r`n", $utf8NoBom)
+  }
+}
+
+Write-Host ""
+Write-Host "Done."
 '@
 
 try {
@@ -431,6 +610,46 @@ try {
   $cbDir    = Join-Path $studyDir 'counterbalance'
   if (-not (Test-Path $testsDir)) { throw "No tests folder in $studyDir. Put setup-study.bat in a study folder." }
   Write-Host "Study: $(Split-Path $studyDir -Leaf)  ($studyDir)"
+
+  # ---------------------------------------------------------------- 0. test library
+  # Library .pbl files have no beeps (step 1 adds them), so a study's .pbl is
+  # compared with its beeps removed; line endings and trailing space are ignored.
+  function Remove-Beeps([string]$t) {
+    $t = [regex]::Replace($t, '(?s)\s*## >>> BEGIN beeps\.pbl.*?## <<< END beeps\.pbl\s*$', "`r`n")
+    return [regex]::Replace($t, '(?m)^[ \t]*Beeps(Start|End)\(\)  ## auto-added by[^\r\n]*\r?\n', '')
+  }
+  function Get-Comparable([string]$t) { return ($t -replace "`r`n", "`n").TrimEnd() }
+
+  Write-Host ""
+  Write-Host "0. Test library"
+  if (-not $Library) { $Library = Join-Path (Split-Path $studyDir -Parent) 'test-library' }
+  if (-not (Test-Path $Library)) {
+    Write-Host "   no test library at $Library; tests are used as they are."
+  } else {
+    $fromLib = 0
+    foreach ($libTest in (Get-ChildItem -Path $Library -Directory)) {
+      $target = Join-Path $testsDir $libTest.Name
+      if (-not (Test-Path $target)) { continue }
+      foreach ($lf in (Get-ChildItem -Path $libTest.FullName -Recurse -File)) {
+        $rel = $lf.FullName.Substring($libTest.FullName.Length + 1)
+        $dst = Join-Path $target $rel
+        $same = $false
+        if (Test-Path $dst) {
+          $cur = [IO.File]::ReadAllText($dst)
+          $new = [IO.File]::ReadAllText($lf.FullName)
+          if ($lf.Extension -eq '.pbl') { $cur = Remove-Beeps $cur }
+          $same = (Get-Comparable $cur) -eq (Get-Comparable $new)
+        }
+        if (-not $same) {
+          New-Item -ItemType Directory -Force -Path (Split-Path $dst -Parent) | Out-Null
+          Copy-Item -LiteralPath $lf.FullName -Destination $dst -Force
+          Write-Host "   from library: tests\$($libTest.Name)\$rel"
+          $fromLib++
+        }
+      }
+    }
+    Write-Host "   $fromLib file(s) taken from $Library"
+  }
 
   # ---------------------------------------------------------------- tests
   $tests = New-Object System.Collections.Generic.List[string]
@@ -636,9 +855,13 @@ try {
   Write-Host ""
   Write-Host "4. Run script"
   [IO.File]::WriteAllText((Join-Path $utilsDir 'run-participant.ps1'), $runnerPs1, $utf8NoBom)
-  $bat = "@echo off`r`nrem Asks for a participant code and runs that participant's counterbalanced chain.`r`nrem Options: run-participant.bat -Participant $($codes[0]) -Fullscreen -StartAt 3 -DryRun`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0utils\run-participant.ps1`" %*`r`npause`r`n"
+  $bat = "@echo off`r`nrem Asks for a participant code and runs that participant's counterbalanced chain.`r`nrem Options: run-participant.bat -Participant $($codes[0]) -Fullscreen -StartAt 3 -DryRun`r`nrem Between tests: Enter = next test, b = go back to the previous test, q = quit`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0utils\run-participant.ps1`" %*`r`npause`r`n"
   [IO.File]::WriteAllText((Join-Path $studyDir 'run-participant.bat'), $bat, $utf8NoBom)
   Write-Host "   wrote run-participant.bat and utils\run-participant.ps1"
+  [IO.File]::WriteAllText((Join-Path $utilsDir 'run-test.ps1'), $runTestPs1, $utf8NoBom)
+  $bat = "@echo off`r`nrem Asks for a participant code, then lets you pick single tests to run (number = run it, q = quit).`r`nrem Options: run-test.bat -Participant $($codes[0]) -Fullscreen -Language $Language`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"%~dp0utils\run-test.ps1`" -Language $Language %*`r`npause`r`n"
+  [IO.File]::WriteAllText((Join-Path $studyDir 'run-test.bat'), $bat, $utf8NoBom)
+  Write-Host "   wrote run-test.bat and utils\run-test.ps1 (run single tests)"
 
   Write-Host ""
   Write-Host "Done. Double-click run-participant.bat to run a participant." -ForegroundColor Green
