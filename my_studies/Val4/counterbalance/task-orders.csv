@@ -1,0 +1,7 @@
+participant_code,task1,task2,task3
+PART_0001,maze,affectgrid,bigfive
+PART_0002,affectgrid,bigfive,maze
+PART_0003,bigfive,maze,affectgrid
+PART_0004,maze,bigfive,affectgrid
+PART_0005,affectgrid,maze,bigfive
+PART_0006,bigfive,affectgrid,maze
