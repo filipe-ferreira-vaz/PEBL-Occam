@@ -7,6 +7,20 @@
       "language": "en",
       "param_variant": "default",
       "random_group": 0,
+      "test_name": "bigfive"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "TNT"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
       "test_name": "maze"
     },
     {
@@ -14,14 +28,28 @@
       "language": "en",
       "param_variant": "default",
       "random_group": 0,
-      "test_name": "affectgrid"
+      "test_name": "ptrails"
     },
     {
       "item_type": "test",
       "language": "en",
       "param_variant": "default",
       "random_group": 0,
-      "test_name": "bigfive"
+      "test_name": "tol/TOL"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "vsearch"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "affectgrid"
     }
   ],
   "lsl_enabled": false,

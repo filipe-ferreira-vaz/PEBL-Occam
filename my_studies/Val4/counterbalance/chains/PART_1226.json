@@ -1,0 +1,58 @@
+{
+  "chain_name": "PART_1226",
+  "description": "Counterbalanced order for PART_1226 (setup-study.bat)",
+  "items": [
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "tol/TOL"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "affectgrid"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "bigfive"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "ptrails"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "TNT"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "maze"
+    },
+    {
+      "item_type": "test",
+      "language": "en",
+      "param_variant": "default",
+      "random_group": 0,
+      "test_name": "vsearch"
+    }
+  ],
+  "lsl_enabled": false,
+  "lsl_stream_name": "PEBL_{test}",
+  "upload_enabled": false
+}
