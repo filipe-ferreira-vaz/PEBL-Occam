@@ -94,25 +94,34 @@ define Start(p)
 
    numtrials <- Length(design)
 
-   ##canned practice trials.
+   ##canned practice trials (not recorded). After them the participant can
+   ##repeat the practice as often as needed, or start the real test.
 
    MessageBox(gStrings.inst2,gWin,40)
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+   repeatPractice <- 1
+   while(repeatPractice)
+   {
+     LSLMarker("block_practice_start")
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
 
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
 
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
 
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
 
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
-   SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+     LSLMarker("block_practice_end")
 
-   MessageBox(gStrings.inst3,gWin,40)
+     repeatPractice <- PracticeChoice(PracticeString("PRACTICEDONE",
+        "The practice is over.  You can repeat the practice trials as many times as you like, or start the real test.  In the real test your responses will be recorded and your performance will count, so try to respond as quickly and accurately as you can."),
+        gWin,30)
+   }
 
    ## Now show trial counter for real trials
    gLayout.subheader.text <- SubstituteStrings(gStrings.trial,
@@ -335,13 +344,14 @@ define SearchTrial(targChar, foilChars,targcol,foilcol,numtargs,num)
     Hide(none)
     Hide(noneback)
 
-   ##Show the target (in this case, the last target)
+   ##Show the target (in this case, the last target) until the participant
+   ##clicks the mouse; the search display appears after the click.
    AddObject(targ,gWin)
    Move(targ,gHomeX,gHomeY)
    label <- EasyLabel(gStrings.target, gLayout.centerX, gLayout.centerY-80, gWin, fontsize)
+   gLayout.header.text <- PracticeString("CLICKTOSEARCH", "Click the mouse button to start searching")
    Draw()
-   Wait(800)
-   Draw()
+   WaitForDownClick()
    Hide(targ)
 
   ##Add all the targets/foils to the specified positions
@@ -540,6 +550,61 @@ define GetMinDist(pts)
 define GetStrings(lang)
 {
   gStrings <- GetTranslations("vsearch", lang)
+}
+
+
+## Practice choice screen: shows text and two boxes to click with the mouse,
+## one to repeat the practice and one to start the real test.
+## Returns 1 (repeat the practice) or 0 (start the real test).
+define PracticeChoice(text, win, fontsize:30)
+{
+  repeatText <- PracticeString("PRACTICEREPEAT", "Repeat the practice")
+  startText  <- PracticeString("PRACTICESTART", "Start the real test")
+
+  bgcol <- win.BGCOLOR
+  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
+  {
+    fgcol <- MakeColor("white")
+  } else {
+    fgcol <- MakeColor("black")
+  }
+
+  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
+  Move(bg, gVideoWidth/2, gVideoHeight/2)
+  AddObject(bg, win)
+  box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
+
+  y <- gVideoHeight - 110
+  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
+  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
+  w <- Max([repeatLab.width, startLab.width]) + 60
+  Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
+  Move(startLab, gVideoWidth/2 + w/2 + 30, y)
+  repeatBox <- Rectangle(gVideoWidth/2 - w/2 - 30, y, w, 70, fgcol, 0)
+  startBox  <- Rectangle(gVideoWidth/2 + w/2 + 30, y, w, 70, fgcol, 0)
+  AddObject(repeatBox, win)
+  AddObject(startBox, win)
+
+  Draw()
+  ShowCursor(1)
+  choice <- WaitForClickOnTarget([repeatBox, startBox], [1, 0])
+  LSLMarker("practice_choice_" + choice)
+
+  RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
+  Draw()
+  return choice
+}
+
+## Text from the translation file, or the English default if the current
+## language file does not have it.
+define PracticeString(key, fallback)
+{
+  out <- fallback
+  if(PropertyExists(gStrings, key))
+  {
+    out <- GetProperty(gStrings, key)
+  }
+  return out
 }
 
 

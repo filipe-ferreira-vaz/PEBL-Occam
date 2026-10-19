@@ -181,7 +181,13 @@ if(gParams.testtype==-1)
 
 
 
-  gInstructions.text <- gInstructions.text + CR(1) + gBegin
+  ##Practice: build the practice problems now, after the real set (and any
+  ##mirror-reversal) has fixed gPoleHeights, so they use the same piles.
+  practice <- PracticeTrials()
+
+  gInstructions.text <- gInstructions.text + CR(1) +
+     PracticeString("PRACTICEINTRO", "First you will solve 3 easy practice problems, which are not scored.") +
+     CR(1) + gBegin
   gInstructions.font <- gFont2
   Draw()
 
@@ -199,6 +205,58 @@ if(gParams.testtype==-1)
   gInstructions.text <- gContinue
 
 
+  ##############################################################
+  ##  Practice: 3 easy problems (built by PracticeTrials()), played exactly
+  ##  like real trials but not written to the data files (gPractice flag).
+  ##  Afterwards the participant can repeat the practice or start the test.
+  practiceFont <- MakeFont(gPEBLBaseFont,0,18,MakeColor("grey80"),MakeColor("black"),1)
+  gPracticeLabel <- MakeLabel(" ",practiceFont)
+  AddObject(gPracticeLabel,gWin)
+  Move(gPracticeLabel,665,25)
+  Hide(gPracticeLabel)
+
+  realContinue <- gContinue
+  gContinue <- PracticeString("PRACTICECONTINUE", "Practice problem complete. "+CR(1)+"Click mouse to continue.")
+  gPractice <- 1
+  repeatPractice <- 1
+  while(repeatPractice)
+  {
+    LSLMarker("block_practice_start")
+    gTrial <- 1
+    gScore <- 0
+    gTotalMoves <- 0
+    gMinMoves <- 0
+    gTotalTime <- 0
+    loop(pair, practice)
+    {
+      gPracticeLabel.text <- PracticeString("PRACTICELABEL", "Practice problem") +
+                             " " + gTrial + "/" + Length(practice)
+      Show(gPracticeLabel)
+      RunProblem(pair)
+      gTrial <- gTrial + 1
+    }
+    Hide(gPracticeLabel)
+    HideAll()
+    Hide(gInstructions)
+    Draw()
+    LSLMarker("block_practice_end")
+
+    repeatPractice <- PracticeChoice(PracticeString("PRACTICEDONE",
+       "The practice is over.  You can repeat the practice as many times as you like, or start the real test.  In the real test your moves will be recorded.  The test begins as soon as you click."),
+       gWin, 30)
+  }
+  ##Back to the real test: clear all practice state.
+  gPractice <- 0
+  gContinue <- realContinue
+  gInstructions.text <- gContinue
+  gReset <- 0
+  gTries <- 1
+  gSkip <- 0
+  gMovesRanOut <- 0
+  gTimeRanOut <- 0
+  ShowCursor(1)
+  Draw()
+  ##############################################################
 
   gTrial  <- 1
 
@@ -212,7 +270,57 @@ if(gParams.testtype==-1)
   LSLMarker("block_test_start")
   loop(pair, stim)
   {
+    RunProblem(pair)
+    gTrial <- gTrial + 1
+  }
+   LSLMarker("block_test_end")
 
+   ##Record a final line
+   report <-"Tower of London Test"+CR(1)+
+      TimeStamp() + CR(1)+
+    "Participant:          " +gSubNum +CR(1)+
+    "Trials:               "+Length(stim)+CR(1)+
+    "Total moves:          "+gTotalMoves+CR(1)+
+    "Minimum moves:        " +gMinMoves +CR(1)+
+    "Total time:           "+gtotalTime/1000
+
+
+   FilePrint(gReportFile,report)
+   FilePrint(gPooledFile,gSubNum+","+TimeStamp()+","+  Length(stim)+","+
+ gTotalMoves+","+gMinMoves +","+gtotalTime)
+
+   ## Close files before upload (required for Windows file locking compatibility)
+   FileClose(gFileOut)
+   FileClose(gFileOutSum)
+   FileClose(gReportFile)
+   FileClose(gPooledFile)
+
+   ##Upload data files
+   ## Note: .filename property persists after FileClose(), so this is safe
+   Print("Uploading data files...")
+   out <- UploadFile(gSubNum, gFileOut.filename); Print(out)
+   out <- UploadFile(gSubNum, gFileOutSum.filename); Print(out)
+   out <- UploadFile(gSubNum, gReportFile.filename); Print(out)
+   out <- UploadFile(gSubNum, gPooledFile.filename); Print(out)
+
+   ## Finalize LSL
+   BeepsEnd()  ## auto-added by sync-beeps.ps1
+   FinalizeLSL()
+
+   gInstructions.text <- gDebriefing + CR(2) + report
+
+   Show(gInstructions)
+   Draw()
+   WaitForAnyKeyPress()
+}
+
+
+
+## Runs one problem (a single trial, plus re-attempts if resets are allowed),
+## including the feedback screen afterwards. Used for practice and real trials.
+## (Moved here unchanged from the trial loop in Start().)
+define RunProblem(pair)
+{
 
    gReset <- 1
    gTries <- 1
@@ -299,56 +407,19 @@ if(gParams.testtype==-1)
      HideAll()
       }
 
-    gTrial <- gTrial + 1
-
-
-   }
-   LSLMarker("block_test_end")
-
-   ##Record a final line
-   report <-"Tower of London Test"+CR(1)+
-      TimeStamp() + CR(1)+
-    "Participant:          " +gSubNum +CR(1)+
-    "Trials:               "+Length(stim)+CR(1)+
-    "Total moves:          "+gTotalMoves+CR(1)+
-    "Minimum moves:        " +gMinMoves +CR(1)+
-    "Total time:           "+gtotalTime/1000
-
-
-   FilePrint(gReportFile,report)
-   FilePrint(gPooledFile,gSubNum+","+TimeStamp()+","+  Length(stim)+","+
- gTotalMoves+","+gMinMoves +","+gtotalTime)
-
-   ## Close files before upload (required for Windows file locking compatibility)
-   FileClose(gFileOut)
-   FileClose(gFileOutSum)
-   FileClose(gReportFile)
-   FileClose(gPooledFile)
-
-   ##Upload data files
-   ## Note: .filename property persists after FileClose(), so this is safe
-   Print("Uploading data files...")
-   out <- UploadFile(gSubNum, gFileOut.filename); Print(out)
-   out <- UploadFile(gSubNum, gFileOutSum.filename); Print(out)
-   out <- UploadFile(gSubNum, gReportFile.filename); Print(out)
-   out <- UploadFile(gSubNum, gPooledFile.filename); Print(out)
-
-   ## Finalize LSL
-   BeepsEnd()  ## auto-added by sync-beeps.ps1
-   FinalizeLSL()
-
-   gInstructions.text <- gDebriefing + CR(2) + report
-
-   Show(gInstructions)
-   Draw()
-   WaitForAnyKeyPress()
+   return(1)
 }
-
 
 
 define Trial(pair)
 {
-   LSLMarker("trial_" + gTrial + "_attempt" + gTries + "_start")
+   ##Practice trials get their own LSL marker names.
+   lslPrefix <- ""
+   if(gPractice)
+   {
+     lslPrefix <- "practice_"
+   }
+   LSLMarker(lslPrefix + "trial_" + gTrial + "_attempt" + gTries + "_start")
 
    ##Keep track of time to make first move.
    firstmovetime <- -1
@@ -385,12 +456,15 @@ define Trial(pair)
     lasttime <- startTime
     time <- startTime
 
-    ##record the starting configuration of the trial
+    ##record the starting configuration of the trial (not for practice)
+    if(not gPractice)
+    {
     FilePrint(gfileout, gSubNum + "," + gTrial + "," + numdisks + "," +
                   MakeStateString(config) + "," +
                   MakeStateString(config1) + ",0,0," + gTries + "," +gScore + "," +
                    starttime + ",0,"+
                   (time - lasttime)  + ",0")
+    }
 
 
     continue <- 1
@@ -447,12 +521,15 @@ define Trial(pair)
          gScore <- gScore + (4-gTries)
        }
 
-      ##record move time.
+      ##record move time (not for practice).
+      if(not gPractice)
+      {
       FilePrint(gfileout, gSubNum + "," + gTrial + "," + numdisks + "," +
               MakeStateString(config) + "," + MakeStateString(config1) + "," +
                  step + "," + gReset + "," + gTries + "," + gScore + "," +
                   time + "," + (time - starttime) +"," +
                     (time-lasttime) + "," + success)
+      }
 
       lasttime <- time
 
@@ -514,11 +591,15 @@ define Trial(pair)
    }
 
    Wait(100)
+   ##summary line (not for practice)
+   if(not gPractice)
+   {
    FilePrint(gFileOutSum, gSubNum + "," + gTrial + "," + numdisks +
        ","+ shortest + ","  +   startlab+ ","+ endlab + "," +
        origstring  + "," +  MakeStateString(config1) + "," + success +
        ","+ gTries + "," + gScore + "," + (step-1) + "," + gStartTime +
        "," +  starttime + "," +   firstmovetime + ","+ (time-starttime))
+   }
 
    if(success)
    {
@@ -543,7 +624,7 @@ define Trial(pair)
          }
        firstmovetime <- -1
 
-   LSLMarker("trial_" + gTrial + "_attempt" + gTries + "_end")
+   LSLMarker(lslPrefix + "trial_" + gTrial + "_attempt" + gTries + "_end")
 
    return success
 
@@ -584,6 +665,8 @@ define Init()
   gFont2 <- MakeFont(gPEBLBaseFont,0,24,MakeColor("white"),MakeColor("black"),1)
    ##Global flag keeping track of whether the trial was aborted.
   gReset <- 0
+  ##Global flag: 1 while practice trials run (they are not written to data files).
+  gPractice <- 0
 }
 
 define InitPoles()
@@ -1205,6 +1288,36 @@ s <- [
     [ [[2,1],[3],[]],[[3],[1],[2]]  ,5,63,45]]
 
   return s
+}
+
+
+## Practice problems: 3 disks, 1, 2 and 3 minimum moves.  Same format as the
+## trial-set functions: [start, goal, shortest, startlab, endlab].
+## Designed for the Shallice piles [3,2,1] (the default test in this study):
+## the start state [[1,3],[2],[]] is not the Shallice start [[2,1],[3],[]],
+## and none of the three goals is one of Shallice's 12 goal states.
+## Minimum moves were checked by breadth-first search with pile limits [3,2,1].
+## If the real set uses piles [1,2,3], the problems are mirror-reversed so they
+## still fit (same minimum moves); unconstrained piles need no change.
+## Call after the real set has been chosen (and reversed), since it reads gPoleHeights.
+define PracticeTrials()
+{
+  ## 1=RED, 2=YELL, 3=BLUE; each pile is listed bottom to top.
+  p <- [
+    [ [[1,3],[2],[]], [[1],[2,3],[]], 1, 0, 0 ],
+    [ [[1,3],[2],[]], [[1,2],[],[3]], 2, 0, 0 ],
+    [ [[1,3],[2],[]], [[3],[2,1],[]], 3, 0, 0 ] ]
+
+  out <- p
+  if(First(gPoleHeights) < Third(gPoleHeights))
+  {
+    out <- []
+    loop(i, p)
+    {
+      out <- Append(out, [Reverse(First(i)), Reverse(Second(i)), Third(i), Fourth(i), Fifth(i)])
+    }
+  }
+  return out
 }
 
 
@@ -1868,6 +1981,62 @@ define GetStrings(language)
     gDebriefing <- gStrings.debriefing
     gContinueFail <- gStrings.continuefail
 }
+
+
+## Practice choice screen: shows text and two boxes to click with the mouse,
+## one to repeat the practice and one to start the real test.
+## Returns 1 (repeat the practice) or 0 (start the real test).
+define PracticeChoice(text, win, fontsize:30)
+{
+  repeatText <- PracticeString("PRACTICEREPEAT", "Repeat the practice")
+  startText  <- PracticeString("PRACTICESTART", "Start the real test")
+
+  bgcol <- win.BGCOLOR
+  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
+  {
+    fgcol <- MakeColor("white")
+  } else {
+    fgcol <- MakeColor("black")
+  }
+
+  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
+  Move(bg, gVideoWidth/2, gVideoHeight/2)
+  AddObject(bg, win)
+  box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
+
+  y <- gVideoHeight - 110
+  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
+  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
+  w <- Max([repeatLab.width, startLab.width]) + 60
+  Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
+  Move(startLab, gVideoWidth/2 + w/2 + 30, y)
+  repeatBox <- Rectangle(gVideoWidth/2 - w/2 - 30, y, w, 70, fgcol, 0)
+  startBox  <- Rectangle(gVideoWidth/2 + w/2 + 30, y, w, 70, fgcol, 0)
+  AddObject(repeatBox, win)
+  AddObject(startBox, win)
+
+  Draw()
+  ShowCursor(1)
+  choice <- WaitForClickOnTarget([repeatBox, startBox], [1, 0])
+  LSLMarker("practice_choice_" + choice)
+
+  RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
+  Draw()
+  return choice
+}
+
+## Text from the translation file, or the English default if the current
+## language file does not have it.
+define PracticeString(key, fallback)
+{
+  out <- fallback
+  if(PropertyExists(gStrings, key))
+  {
+    out <- GetProperty(gStrings, key)
+  }
+  return out
+}
+
 
 
 ## >>> BEGIN beeps.pbl (auto-copied, do not edit)
