@@ -5,5 +5,10 @@
 "FINISH": "This test is complete. Click the screen to proceed.",
 "TYPE1": "Click on each number consecutively. (1-2-3-4)",
 "TYPE2": "Click alternately on each number and letter in order. (1-A-2-B).",
-"TYPE3": "Click alternately on each letter in order. (A-B-C-D)."
+"TYPE3": "Click alternately on each letter in order. (A-B-C-D).",
+"PRACTICEINTRO": "Before the real test, you will do a short practice round with one example of each type of trail.",
+"PRACTICEHEADER": "Practice: ",
+"PRACTICEDONE": "The practice is over.  You can repeat the practice trials as many times as you like, or start the real test.  In the real test your responses will be recorded and your performance will count, so try to respond as quickly and accurately as you can.",
+"PRACTICEREPEAT": "Repeat the practice",
+"PRACTICESTART": "Start the real test"
 }

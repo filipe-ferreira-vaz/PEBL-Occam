@@ -1,0 +1,867 @@
+##################################################
+##  PEBL Visual Search Task
+##  Part of the PEBL Test Battery, and the
+##  PEBL Cognitive Decathlon
+##
+## (c) 2010-2014 Shane T Mueller smueller@obereed.net
+##
+## This software may be used, adapted, altered, or
+## redistributed without consent of the author.
+##################################################
+
+define Start(p)
+{
+   gScriptName <- "PEBL Visual Search Task"
+
+  ## Initialize upload system (works for both online and native)
+  InitializeUpload()
+
+  parpairs <- [["boxwidth",600],
+               ["boxheight",400],
+	       ["targs","OX"],
+	       ["foils","UDGCQ"],
+	       ["searchsizes",[10,20,30]],
+	       ["numtargs",[0,1,5]],
+               ["targcols",["white","green"]],
+	       ["foilcolor","white"],
+	       ["reps", 5]
+              ]
+
+  gParams <- CreateParameters(parpairs,gParamFile)
+
+  gParams.reps <- 1
+  
+  gWin <- MakeWindow("black")
+  InitializeLSL(gWin)  ## Initialize LSL outlet if --lsl flag was used
+  BeepsStart()  ## auto-added by setup-study.bat
+  gSleepEasy <- 1
+
+  ##get subject code if you don't have one.
+  if(gSubNum+"" == "0")
+   {
+     gSubNum <- GetSubNum(gWin)
+   }
+
+
+  GetStrings(gLanguage)
+
+  ## Create layout for header/footer zones (layout-only, no response system)
+  gParams.responsesemantics <- "none"  ## Disable response labels
+  gLayout <- CreateLayout("vsearch", gWin, gParams)
+
+  ## Hide response labels - layout.responseLabels is a list of label widgets
+  loop(label, gLayout.responseLabels)
+  {
+    label.visible <- 0
+  }
+
+  gLayout.header.text <- ""  ## Will be used for instructions during trials
+  gLayout.footer.text <- ""  ## No footer needed for mouse task
+  gLayout.subheader.text <- ""  ## Will be updated with trial counter
+
+  ## Use layout center instead of gVideoWidth/2
+  gHomeX <- gLayout.centerX
+  gHomeY <- gLayout.centerY
+
+  gDisplayBoxSizeX <- gParams.boxwidth   ##pixels/side,centered
+  gDisplayBoxSizeY <- gParams.boxheight  ##pixels/side,centered
+
+
+   ##The following specify the conditions of the experiment.
+   targs  <- SplitString(gParams.targs,"")
+   foils <- SplitString(gParams.foils,"")
+
+   foilcolor <- MakeColor(gParams.foilcolor)
+   searchsize <- gParams.searchsizes
+   numtargs <- gParams.numtargs
+
+   targcols <- gParams.targcols
+   reps  <- gParams.reps
+
+
+   gFileOut <- GetNewDataFile(gSubNum,gWin,"vsearch","csv",
+    "sub,trial,time,numtargs,size,targchar,targcol,stim,resp,corr,rt1,rt2")
+
+    ##increase text size:
+    MessageBox(ReplaceChar(gStrings.inst1,"<NONE>",gStrings.none),gWin,40)
+
+
+   ##These aggregate the conditions into a single design list.
+   sizes  <- (DesignFullCounterbalance(numtargs,searchsize))
+   bytargs <- DesignFullCounterbalance(targs,targcols)
+   sizebycolor <- DesignFullCounterbalance(sizes,bytargs)
+   design <- Shuffle(RepeatList(sizebycolor,reps))
+
+   numtrials <- Length(design)
+
+   ##canned practice trials (not recorded). After them the participant can
+   ##repeat the practice as often as needed, or start the real test.
+
+   MessageBox(gStrings.inst2,gWin,40)
+   repeatPractice <- 1
+   while(repeatPractice)
+   {
+     LSLMarker("block_practice_start")
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,0,10)
+     SearchTrial(Sample(targs),foils, MakeColor(Sample(targcols)),foilcolor,1,10)
+     LSLMarker("block_practice_end")
+
+     repeatPractice <- PracticeChoice(PracticeString("PRACTICEDONE",
+        "The practice is over.  You can repeat the practice trials as many times as you like, or start the real test.  In the real test your responses will be recorded and your performance will count, so try to respond as quickly and accurately as you can."),
+        gWin,30)
+   }
+
+   ## Now show trial counter for real trials
+   gLayout.subheader.text <- SubstituteStrings(gStrings.trial,
+                                               [["<I>","1"],
+                                                ["<N>",numtrials]])
+   gLayout.subheader.visible <- 1
+
+   rts <- []
+   accs <- []
+
+  ##Move through each trial of the design.
+  trial <- 1
+  LSLMarker("block_test_start")
+  ##loop through each trial.
+  loop(i,design)
+   {
+
+     time <- GetTime()
+     numTargs <- First(First(i))
+     num      <- Second(First(i))
+     targ     <- First(Second(i))
+     targcol  <-  Second(Second(i))
+
+     LSLMarker("trial_" + trial + "_targs" + numTargs + "_size" + num + "_start")
+     out <- SearchTrial(targ,foils, MakeColor(targcol),foilcolor,numTargs,num)
+     LSLMarker("trial_response_corr" + Nth(out,5) + "_rt" + Nth(out,6))
+
+     FilePrint_(gFileOut,gSubNum + "," + trial + "," + time + "," + numTargs + "," + num + "," +targ + "," + targcol)
+     loop(j,SubList(out,3,Length(out)))
+      {
+         FilePrint_(gFileOut,"," + j )
+
+      }
+    FilePrint(gFileOut,"")
+    PushOnEnd(rts,Nth(out,6))
+    PushOnEnd(accs,Nth(out,5))
+
+    if(Mod(trial,40)==0)
+     {
+        MessageBox(gstrings.break,gWin,40)
+	Draw()
+	Wait(1000)
+	Draw()
+     }
+
+    trial <- trial + 1
+    gLayout.subheader.text <- SubstituteStrings(gStrings.trial,
+                                                [["<I>",trial],
+                                                 ["<N>",numtrials]])
+
+   }
+  LSLMarker("block_test_end")
+
+  ## Finalize LSL
+  BeepsEnd()  ## auto-added by setup-study.bat
+  FinalizeLSL()
+
+   #Now, compute search-time means for a simple report.
+   gSumFile <- FileOpenWrite("data/"+gSubNum+"/summary-"+gSubNum+".txt")
+
+
+   tdes <- Transpose(design)
+   dimsize <- Nth(tdes,1)
+   dimtargs <- Nth(tdes,2)
+
+   #dimcolors <- Nth(tdes,3)
+
+   newdat <- Transpose(Merge(tdes,[rts,accs]))
+
+targlevs <- Levels(dimtargs)
+
+out <-out + FilePrint(gSumFile,"----------------------------------------------")
+   out <- out + FilePrint(gSumfile,"Target   color    X   present  size   Mean(RT)   Mean(acc)")
+   out <- out + FilePrint(gSumFile,"----------------------------------------------")
+
+loop(target,targlevs) ##target
+   {
+
+
+      filter1 <- []
+      loop(d,dimtargs)
+      {
+         match <- (First(target)==First(d)) and (Second(target)==Second(d))
+         PushOnEnd(filter1,match)
+      }
+
+
+     ##match might be [0,0,0,0,0,0...] here
+
+     tmp1 <- Filter(newdat,filter1)
+
+     ##tmp1 might be empty here.
+
+      newcol <- Nth(Transpose(tmp1),3)
+      loop(color,Levels(newcol))  ##color
+        {
+
+         ##For each color, pick out the different sizes
+         tmp2 <- Filter(tmp1,Match(newcol,color))
+         newsize <- Nth(Transpose(tmp2),1)  ##match size
+         newsize2 <- Nth(Transpose(tmp2),2) ##match color
+          ##This matches the [0,10]; [5, 20] type stuff.
+
+         loop(size,Levels(newsize))
+	    {
+
+              filterSize <- []
+	      tmp3 <- []
+	      loop(sizei, newsize)
+	       {
+	          match <- (First(sizei)==First(size) and
+		                 Second(sizei)==Second(size))
+		  PushOnEnd(filterSize,match)
+	       }
+
+              tmp3 <-Filter(tmp2,filterSize)
+	      ttmp3 <- Transpose(tmp3)
+
+
+              tmprts <- Nth(ttmp3,3)
+	      tmpaccs <- Nth(ttmp3,4)
+              out <- out +FilePrint(gSumFile,First(target)+"  " + Second(target) + "   " + (color) +
+	              "  " + First(size)+"  " + Second(size) + "  " +Mean(tmprts) +"  " + Mean(tmpaccs))
+
+	    }
+
+      }
+   }
+
+  out <- out + FilePrint(gSumFile,"----------------------------------------------")
+
+  ## Close data files before upload
+  FileClose(gFileOut)
+  FileClose(gSumFile)
+
+  ## Upload data files (works online, no-op on native)
+  datafile <- "data/" + gSubNum + "/vsearch-" + gSubNum + ".csv"
+  summaryfile <- "data/" + gSubNum + "/summary-" + gSubNum + ".txt"
+  UploadFile(gSubNum, datafile)
+  UploadFile(gSubNum, summaryfile)
+
+  MessageBox(gStrings.debrief,gWin,40)
+}
+
+
+##  This runs a single search trial.
+##  targchars is a list of 'target' characters
+##  foilchars is a list of 'foil' characters.
+##  targcol and foilcol specify the colors of these.
+##  if absentoption == 1, there will be a 'NONE' button provided
+
+define SearchTrial(targChar, foilChars,targcol,foilcol,numtargs,num)
+{
+
+  ShowCursor(0)  #Get rid of the cursor
+
+  ##Some startup stuff
+  fontsize <- 30
+  targFont <- MakeFont(gPEBLBaseFont,0,fontsize,targCol,MakeColor("black"),1)
+  foilFont <- MakeFont(gPEBLBaseFont,0,fontsize,foilCol,MakeColor("black"),1)
+  bgcol   <- MakeColor("grey")
+
+  ##num is the total number in the display set.  We need to create a
+  ##list of stimulus characters exactly that long.
+
+  numfoils <- num - numtargs
+  foilset <- DesignBalancedSampling(foilChars,numfoils)
+
+ ##make a label for each target.
+ i <- 1
+ targs <- []
+ bgs <- []
+ targChars <- Repeat(targChar,numtargs)
+ if(numTargs > 0)
+  {
+   loop(t,targChars)
+    {
+    targ <- MakeLabel(t,targFont)
+    targs <- Append(targs,[targ,1])
+    bg   <- Circle(0,0,18,bgcol,0)
+    bg.aa <- 1
+    bgs   <- Append(bgs,bg)
+    }
+  } else {  #If there are no targets, we still need to display the search character
+    targ <- MakeLabel(targChar,targFont)
+  }
+
+##make label for each foil (and the backgrounds)
+ foils <- []
+ loop(f,foilset)
+  {
+    foil <- MakeLabel(f,foilFont)
+    bg   <- Circle(0,0,18,bgcol,0)
+    bg.aa <- 1
+    foils <- Append(foils,[foil,2])
+    bgs   <- Append(bgs,bg)
+  }
+
+   num <- Length(targs)+Length(foils)
+
+  #Compute the bounds of the display box
+   minx <- gHomeX-gDisplayBoxSizeX/2
+   maxx <- gHomeX+gDisplayBoxSizeX/2
+   miny <- gHomey-gDisplayBoxSizeY/2
+   maxy <- gHomey+gDisplayBoxSizeY/2
+
+   ##create the xy points
+   pts <- MakePoints(minx,maxx,miny,maxy,40,num)
+
+  complex <- Transpose(Append( Merge( Transpose( Merge(targs,foils)),
+                                 Transpose(pts)),bgs))
+
+   ##Add a 'none' button below stimulus region, but hide it.
+    ## Position in the response label zone (below footer)
+    noneY <- gLayout.footer.y + 60  ## Below footer
+    none <- EasyLabel(gStrings.none, gLayout.centerX, noneY, gWin, fontsize)
+    noneback <- Rectangle(gLayout.centerX, noneY, 140, 60, MakeColor("grey"), 0)
+    AddObject(none,gWin)
+    AddObject(noneback,gWin)
+    Hide(none)
+    Hide(noneback)
+
+   ##Show the target (in this case, the last target) until the participant
+   ##clicks the mouse; the search display appears after the click.
+   AddObject(targ,gWin)
+   Move(targ,gHomeX,gHomeY)
+   label <- EasyLabel(gStrings.target, gLayout.centerX, gLayout.centerY-80, gWin, fontsize)
+   gLayout.header.text <- PracticeString("CLICKTOSEARCH", "Click the mouse button to start searching")
+   Draw()
+   WaitForDownClick()
+   Hide(targ)
+
+  ##Add all the targets/foils to the specified positions
+   tmp <- []
+   backs <- []
+  loop(i,complex)
+  {
+
+    obj <- First(i)
+    x <- Third(i)
+    y <- Fourth(i)
+    back <- Fifth(i)
+
+    AddObject(obj,gWin)
+    AddObject(back,gWin)
+    Show(obj)
+    Hide(back)
+    Move(back,x,y)
+    Move(obj,x,y)
+    tmp <- Append(tmp,obj)
+    backs <- Append(backs,back)
+  }
+
+  ## Use header for instructions during trial
+  gLayout.header.text <- gStrings.complete
+  label.visible <- 0  ## Hide the local label, use header instead
+  Draw()
+  time1 <- GetTime()
+  WaitForDownClick()
+  time2 <- GetTime()
+  ShowCursor(1)
+  SetMouseCursorPosition(gHomeX,gHomeY)
+  Draw()
+
+  ## Update header for selection phase
+  gLayout.header.text <- gStrings.select
+  Show(none)
+  Show(noneback)
+  RemoveObjects(tmp,gWin)
+  ShowObjects(backs)
+  Draw()
+  time3 <- GetTime()
+  bgs <- Merge([noneback],bgs)
+
+
+  resp <-  WaitForClickOnTarget(bgs,Sequence(0,num,1))
+
+
+  time4 <- GetTime()
+  RemoveObjects(bgs,gWin)
+  RemoveObject(label,gWin)
+  RemoveObject(none,gWin)
+
+  ## Clear header after trial
+  gLayout.header.text <- ""
+
+
+  if(numtargs==0)
+  {
+    RemoveObject(targ,gWin)
+  }
+  Draw()
+
+  if(numtargs == 0)
+    {
+       corr <- (resp == 0)
+    } else {
+       corr <- resp <= numtargs
+    }
+   display <- ListToString(Merge(targChars,foilset))
+
+  return [numtargs, num, display, resp, corr, (time2-time1),(time4-time3)]
+}
+
+
+define ShowObjects(list)
+{
+   loop(i,Flatten(list))
+   {
+     Show(i)
+   }
+}
+
+define MakePoints(xmin, xmax, ymin, ymax, tol, num)
+{
+
+   ##should you watch the points evolve?
+   watch <- 0
+
+
+   ##Note that it is possible to arrange the situation
+   ## so that the distribution will never be satisfied.  So, lets
+   ## set up a 'limit' at which point we give up and return the best
+   ## we have so far.
+
+   limit <- 100
+
+
+  ## First, just initialize num points.
+  pts <- []
+  i <- 1
+  while(i <= num)
+   {
+
+     x <- xmin + Random()*(xmax-xmin)
+     y <- ymin + Random()*(ymax-ymin)
+     pts <- Append(pts, [x,y])
+     i <- i + 1
+   }
+
+  #Now, check for the minimum distance between two points.
+   tries <- 1
+   minpair <-  GetMinDist(pts)
+
+
+   ##Move one point at a time
+   while(First(minpair) < tol and tries < limit)
+   {
+     pt1id <- Nth(minpair,2)
+     pt2id <- Nth(minpair,3)
+
+     pt1 <- Nth(pts,pt1id)
+     pt2 <- Nth(pts,pt2id)
+
+    #resample the 'bad' points
+
+     ##Half the time, try to move a little bit away from
+     ##the closest. Otherwise, do it randomly.
+
+
+     pt1 <-   [ xmin + Random()*(xmax-xmin),
+                  ymin + Random()*(ymax-ymin) ]
+
+
+     ##Reassemble pts
+     tmp <- RemoveSubset(pts,[pt1id])
+
+     ##See if this configuration is an improvement
+     testpts <- Merge(tmp,[pt1])
+     minpairtest <-  GetMinDist(testpts)
+
+     ##If we've made an improvement, use it, otherwise abandon it.
+     if(First(minpairtest) >= First(minpair))
+     {
+        minpair <- minpairtest
+        pts <- testpts
+     }
+     tries <- tries + 1
+
+   }
+
+
+
+  return Shuffle(pts)
+}
+
+define GetMinDist(pts)
+{
+   len <- Length(pts)
+   index1 <- 1
+   mindist <- Dist(First(pts),Nth(pts,2))
+   id1 <- 1
+   id2 <- 2
+
+   loop(i,pts)
+   {
+     pt1 <- i
+     index2 <- index1 + 1
+
+
+     if(index2 <= len)
+      {
+      rest <- SubList(pts,index2, Length(pts))
+      loop(j, rest)
+       {
+        d <- Dist(i,j)
+
+        if(d < mindist)
+        {
+          mindist <- d
+          id1 <- index1
+          id2 <- index2
+        }
+
+        index2 <- index2 + 1
+      }
+      }
+     index1  <- index1 + 1
+   }
+
+   return [mindist,id1,id2]
+}
+
+
+
+define GetStrings(lang)
+{
+  gStrings <- GetTranslations("vsearch", lang)
+}
+
+
+## Practice choice screen: shows text and two boxes to click with the mouse,
+## one to repeat the practice and one to start the real test.
+## Returns 1 (repeat the practice) or 0 (start the real test).
+define PracticeChoice(text, win, fontsize:30)
+{
+  repeatText <- PracticeString("PRACTICEREPEAT", "Repeat the practice")
+  startText  <- PracticeString("PRACTICESTART", "Start the real test")
+
+  bgcol <- win.BGCOLOR
+  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
+  {
+    fgcol <- MakeColor("white")
+  } else {
+    fgcol <- MakeColor("black")
+  }
+
+  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
+  Move(bg, gVideoWidth/2, gVideoHeight/2)
+  AddObject(bg, win)
+  box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
+
+  y <- gVideoHeight - 110
+  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
+  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
+  w <- Max([repeatLab.width, startLab.width]) + 60
+  Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
+  Move(startLab, gVideoWidth/2 + w/2 + 30, y)
+  repeatBox <- Rectangle(gVideoWidth/2 - w/2 - 30, y, w, 70, fgcol, 0)
+  startBox  <- Rectangle(gVideoWidth/2 + w/2 + 30, y, w, 70, fgcol, 0)
+  AddObject(repeatBox, win)
+  AddObject(startBox, win)
+
+  Draw()
+  ShowCursor(1)
+  choice <- WaitForClickOnTarget([repeatBox, startBox], [1, 0])
+  LSLMarker("practice_choice_" + choice)
+
+  RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
+  Draw()
+  return choice
+}
+
+## Text from the translation file, or the English default if the current
+## language file does not have it.
+define PracticeString(key, fallback)
+{
+  out <- fallback
+  if(PropertyExists(gStrings, key))
+  {
+    out <- GetProperty(gStrings, key)
+  }
+  return out
+}
+
+
+## >>> BEGIN beeps.pbl (auto-copied, do not edit)
+##########################################################
+## beeps.pbl -- reusable pure-tone (sine wave) functions
+##
+## PEBL has no import statement, so this file is COPIED into each test
+## by setup-study.bat (from <study>/utils/beeps.pbl). Edit only that copy,
+## then re-run setup-study.bat.
+##
+## Standard start/end beeps: setup-study.bat also inserts
+##     BeepsStart()   right after the test's LSL setup line (window just opened)
+##     BeepsEnd()     right before the test's LSL shutdown line (test finished)
+## so every synced test beeps at its start and end automatically. BeepsEnd()
+## also saves all beeps to data/<subject>/beeps-<subject>.csv.
+## To opt a test out of the automatic calls, put this line anywhere in it:
+##     ## beeps: no auto calls
+## (the functions below stay available for calling by hand).
+##
+## Why not MakeSineWave()?  In this PEBL build (2.4, Windows) MakeSineWave()
+## returns a sound with no audio buffer: it plays for 0 ms. Instead, each
+## tone is written once to a .wav file (via a small PowerShell helper) in the
+## test's folder, e.g. tone-1000Hz-50ms-a0.8.wav, and loaded with LoadSound().
+## Later runs reuse the cached file, so the PowerShell call only happens the
+## first time a given frequency/duration/amplitude is requested.
+##
+## Functions:
+##   MakeTone(freq, durationMs, amplitude:0.8)
+##        Returns a sound object you can pass to PlayTone/PlayBackground.
+##        Call it early (e.g. during setup) to avoid the one-time ~0.3 s
+##        generation delay and the up-to-1 s clock sync (see below) at
+##        play time.
+##   PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+##        Plays a tone and returns its onset timestamp (GetTime(), ms).
+##        blocking=1 waits for the tone to finish (use it right before the
+##        script exits). Each play is recorded in gToneLog.
+##   Beep(label:"beep")
+##        Shortcut: 1000 Hz, 50 ms, amplitude 0.8, non-blocking.
+##   BeepsStart() / BeepsEnd()
+##        Standard 1000 Hz / 50 ms start and end beeps (see above). The end
+##        beep is blocking, so it finishes before the test closes.
+##   GetToneLog()
+##        List of [label, freq, durationMs, amplitude, timestamp, clocktime]
+##        for every tone played so far.
+##
+## timestamp comes from GetTime(), so it is on the same clock as the RTs and
+## abstime values PEBL tests already record.
+## clocktime is the PC's local clock time, "YYYY-MM-DD HH:MM:SS.mmm".
+## PEBL's TimeStamp() only has 1 s resolution (and GetTimeOfDay() returns a
+## broken value in this build), so on first use the library waits for the PC
+## clock's second to tick over (up to 1 s), records GetTime() at that instant,
+## and afterwards computes clock time = that second + elapsed GetTime().
+##########################################################
+
+define MakeTone(freq, durationMs, amplitude:0.8)
+{
+  ToneClockSync()
+  key <- freq + "Hz-" + durationMs + "ms-a" + amplitude
+
+  ## reuse an already-loaded sound
+  if(not VariableExists("gToneCache"))
+  {
+    gToneCache <- []
+  }
+  sound <- 0
+  loop(pair, gToneCache)
+  {
+    if(First(pair) == key)
+    {
+      sound <- Second(pair)
+    }
+  }
+
+  if(IsNumber(sound))
+  {
+    filename <- "tone-" + key + ".wav"
+    if(not FileExists(filename))
+    {
+      ToneWriteHelper()
+      cmd <- "powershell -NoProfile -ExecutionPolicy Bypass -File beeps-maketone.ps1" +
+             " -f " + freq + " -d " + durationMs + " -a " + amplitude + " -o " + filename
+      SystemCall(cmd, "")
+      if(not FileExists(filename))
+      {
+        SignalFatalError("beeps.pbl: could not create " + filename +
+                         " (PowerShell is required to generate tones)")
+      }
+    }
+    sound <- LoadSound(filename)
+    gToneCache <- Append(gToneCache, [key, sound])
+  }
+  return(sound)
+}
+
+
+define PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+{
+  sound <- MakeTone(freq, durationMs, amplitude)
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+
+  t <- GetTime()
+  if(blocking)
+  {
+    PlayForeground(sound)
+  } else {
+    PlayBackground(sound)
+  }
+
+  gToneLog <- Append(gToneLog, [label, freq, durationMs, amplitude, t, ToneClockTime(t)])
+  return(t)
+}
+
+
+define Beep(label:"beep")
+{
+  return(PlayTone(1000, 50, 0.8, 0, label))
+}
+
+
+## Syncs GetTime() to the PC clock once (waits up to 1 s the first time).
+## Returns [GetTime() at a whole second, that second as ms since midnight].
+define ToneClockSync()
+{
+  if(not VariableExists("gToneClockAnchor"))
+  {
+    ts0 <- TimeStamp()
+    ts <- ts0
+    while(ts == ts0)
+    {
+      ts <- TimeStamp()
+    }
+    t <- GetTime()
+    gToneClockAnchor <- [t, Nth(ToneParseTimeStamp(ts),4)*1000]
+  }
+  return(gToneClockAnchor)
+}
+
+
+## Converts a GetTime() value to PC local clock time "YYYY-MM-DD HH:MM:SS.mmm"
+define ToneClockTime(t)
+{
+  anchor <- ToneClockSync()
+  date <- ToneParseTimeStamp(TimeStamp())
+  ms <- Mod(Second(anchor) + t - First(anchor), 86400000)
+  clock <- Nth(date,1) + "-" + ZeroPad(Nth(date,2),2) + "-" + ZeroPad(Nth(date,3),2) + " " +
+           ZeroPad(Floor(ms/3600000),2) + ":" + ZeroPad(Floor(Mod(ms,3600000)/60000),2) + ":" +
+           ZeroPad(Floor(Mod(ms,60000)/1000),2) + "." + ZeroPad(Mod(ms,1000),3)
+  return(clock)
+}
+
+
+## Parses TimeStamp() text like "Fri Oct 09 20:31:36 2026"
+## into [year, month, day, seconds since midnight]
+define ToneParseTimeStamp(ts)
+{
+  tokens <- []
+  loop(tok, SplitString(ts, " "))
+  {
+    if(tok != "")
+    {
+      tokens <- Append(tokens, tok)
+    }
+  }
+  month <- 1
+  i <- 1
+  loop(name, ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+  {
+    if(name == Nth(tokens,2))
+    {
+      month <- i
+    }
+    i <- i + 1
+  }
+  hms <- SplitString(Nth(tokens,4), ":")
+  secs <- ToNumber(Nth(hms,1))*3600 + ToNumber(Nth(hms,2))*60 + ToNumber(Nth(hms,3))
+  return([ToNumber(Nth(tokens,5)), month, ToNumber(Nth(tokens,3)), secs])
+}
+
+
+## Standard start beep (inserted automatically by setup-study.bat)
+define BeepsStart()
+{
+  MakeTone(1000, 50)   ## generate/load and sync the clock before playing
+  return(Beep("beep_start"))
+}
+
+
+## Standard end beep (inserted automatically by setup-study.bat).
+## Blocking, then saves every beep of this run to data/<subject>/beeps-<subject>.csv
+define BeepsEnd()
+{
+  t <- PlayTone(1000, 50, 0.8, 1, "beep_end")
+  BeepsWriteLog()
+  return(t)
+}
+
+
+## Writes all beeps played so far to data/<subject>/beeps-<subject>.csv
+## (the same folder as the test's other data files; appends if it exists)
+define BeepsWriteLog()
+{
+  dir <- "data/" + gSubNum
+  if(not IsDirectory("data"))
+  {
+    MakeDirectory("data")
+  }
+  if(not IsDirectory(dir))
+  {
+    MakeDirectory(dir)
+  }
+  filename <- dir + "/beeps-" + gSubNum + ".csv"
+  isnew <- not FileExists(filename)
+  out <- FileOpenAppend(filename)
+  if(isnew)
+  {
+    FilePrint(out, "subnum,event,freq,durationms,amplitude,abstime,clocktime")
+  }
+  loop(tone, GetToneLog())
+  {
+    FilePrint(out, gSubNum + "," + ConcatenateList(tone, ","))
+  }
+  FileClose(out)
+  return(filename)
+}
+
+
+define GetToneLog()
+{
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+  return(gToneLog)
+}
+
+
+## Writes the PowerShell WAV generator next to the test (once).
+## Output: 44.1 kHz, 16-bit, mono PCM sine wave.
+define ToneWriteHelper()
+{
+  helper <- "beeps-maketone.ps1"
+  if(not FileExists(helper))
+  {
+    ps <- FileOpenOverwrite(helper)
+    FilePrint(ps, "param([double]$f,[int]$d,[double]$a,[string]$o)")
+    FilePrint(ps, "$sr=44100; $n=[int]($sr*$d/1000); $ms=New-Object IO.MemoryStream; $w=New-Object IO.BinaryWriter($ms)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36+$n*2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))")
+    FilePrint(ps, "$w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr*2)); $w.Write([int16]2); $w.Write([int16]16)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n*2))")
+    FilePrint(ps, "for($i=0;$i -lt $n;$i++){ $w.Write([int16][Math]::Round(32767*$a*[Math]::Sin(2*[Math]::PI*$f*$i/$sr))) }")
+    FilePrint(ps, "$w.Flush(); [IO.File]::WriteAllBytes((Join-Path (Get-Location) $o),$ms.ToArray())")
+    FileClose(ps)
+  }
+  return(helper)
+}
+## <<< END beeps.pbl

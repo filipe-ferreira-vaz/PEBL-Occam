@@ -1,0 +1,96 @@
+Participant number : VAL2_1003
+
+Type : zero-back
+Target Amount 4
+Number of misses : 10
+Number of correct responses : 9
+Number of incorrect responses : 3
+
+Number of true positives : 1
+Number of true negatives : 8
+Number of false positives : 0
+Number of false negatives : 3
+
+Mean correct answer response time : 2307
+Mean incorrect answer response time : inf
+
+Participant number : VAL2_1003
+
+Type : two-back
+Target Amount 4
+Number of misses : 12
+Number of correct responses : 8
+Number of incorrect responses : 4
+
+Number of true positives : 0
+Number of true negatives : 8
+Number of false positives : 0
+Number of false negatives : 4
+
+Mean correct answer response time : nan
+Mean incorrect answer response time : nan
+
+Participant number : VAL2_1003
+
+Type : two-back
+Target Amount 4
+Number of misses : 7
+Number of correct responses : 7
+Number of incorrect responses : 5
+
+Number of true positives : 2
+Number of true negatives : 5
+Number of false positives : 3
+Number of false negatives : 2
+
+Mean correct answer response time : 294
+Mean incorrect answer response time : 469.667
+
+Participant number : VAL2_1003
+
+Type : one-back
+Target Amount 4
+Number of misses : 12
+Number of correct responses : 8
+Number of incorrect responses : 4
+
+Number of true positives : 0
+Number of true negatives : 8
+Number of false positives : 0
+Number of false negatives : 4
+
+Mean correct answer response time : nan
+Mean incorrect answer response time : nan
+
+Participant number : VAL2_1003
+
+Type : one-back
+Target Amount 4
+Number of misses : 12
+Number of correct responses : 8
+Number of incorrect responses : 4
+
+Number of true positives : 0
+Number of true negatives : 8
+Number of false positives : 0
+Number of false negatives : 4
+
+Mean correct answer response time : nan
+Mean incorrect answer response time : nan
+
+Participant number : VAL2_1003
+
+Type : zero-back
+Target Amount 4
+Number of misses : 12
+Number of correct responses : 8
+Number of incorrect responses : 4
+
+Number of true positives : 0
+Number of true negatives : 8
+Number of false positives : 0
+Number of false negatives : 4
+
+Mean correct answer response time : nan
+Mean incorrect answer response time : nan
+

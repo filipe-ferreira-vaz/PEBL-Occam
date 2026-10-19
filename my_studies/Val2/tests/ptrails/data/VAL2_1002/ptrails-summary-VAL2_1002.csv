@@ -1,0 +1,7 @@
+sub,blocktype,type,distance,studytime,totaltime,mediantime,targs,clicks,acc
+VAL2_1002,practice,number,358.199,3851,2099,918.5,4,5,0.8
+VAL2_1002,test,number,2981.57,932,12668,404,26,30,0.866667
+VAL2_1002,practice,letter,322.735,773,1140,461.5,4,4,1
+VAL2_1002,test,letter,2776.48,968,12745,473.5,26,28,0.928571
+VAL2_1002,practice,alternating,321.257,559,1240,456,4,4,1
+VAL2_1002,test,alternating,2981.57,1587,18620,514,26,31,0.83871

@@ -1,0 +1,32 @@
+
+
+--------------------------------------------------------------------
+50-item  IPIP representation of the Goldberg (1992) markers for the big-five factor structure.
+see http://ipip.ori.org/
+Implementation part of the PEBL Project
+http://pebl.sf.net
+
+
+
+
+
+--------------------------------------------------------------------
+see  Goldberg, L. R. (1992).  The development of markers for the Big-Five factor structure.  Psychological Assessment, 4, 26-42.
+
+
+--------------------------------------------------------------------
+Tue Oct 13 23:44:48 2026
+PEBL Version 2.4
+Participant code:VAL2_1002
+Time to complete: 1.51568 min.
+
+
+Composite score for each dimension:
+Extroversion:            29
+Agreeableness:           31
+Conscientiousness:       29
+Emotional Stability:     30
+Intellect/Imagination:   31
+
+
+--------------------------------------------------------------------
