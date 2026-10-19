@@ -1,3 +1,0 @@
-subnum,event,freq,durationms,amplitude,abstime,clocktime
-VAL2_1001,beep_start,1000,50,0.8,1042,2026-10-12 11:57:44.362
-VAL2_1001,beep_end,1000,50,0.8,156448,2026-10-12 12:00:19.768
