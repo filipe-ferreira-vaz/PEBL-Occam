@@ -15,6 +15,7 @@ The `.pbl` files have **no beeps** — `setup-study.bat` adds them.
 | `TNT` | Mouse choice screen (repeat practice / start real test) replaces the "press a key" screen after the practice |
 | `maze` | Repeat/start choice screen after the practice maze |
 | `ptrails` | One short practice trial per trail type (1-2-3-4, A-B-C-D, 1-A-2-B) before the real test, then the choice screen |
+| `ptrails-pt` | Same as `ptrails`, but with 23 targets: numbers 1-23 and the letters A-Z without K, W and Y. Data files are named `ptrails-pt-*` |
 | `tol` | 3 easy 3-disc practice problems (1, 2, 3 moves, not in the real set), then the choice screen |
 
 To change a test for all future studies, edit it here, then re-run

@@ -31,6 +31,12 @@
       "test_path": "ptrails"
     },
     {
+      "display_name": "ptrails-pt",
+      "included": true,
+      "test_name": "ptrails-pt",
+      "test_path": "ptrails-pt"
+    },
+    {
       "display_name": "tol/TOL",
       "included": true,
       "test_name": "tol/TOL",
