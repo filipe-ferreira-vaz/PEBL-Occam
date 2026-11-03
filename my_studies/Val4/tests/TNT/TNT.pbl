@@ -205,7 +205,9 @@ define TNT() {
         false_pos <- 0
         false_neg <- 0
         totalRT_correct <- 0
+        nRT_correct <- 0
         totalRT_incorrect <- 0
+        nRT_incorrect <- 0
         miss <- 0
 
         zeroBackStimList <- [
@@ -253,7 +255,9 @@ define TNT() {
                 false_pos <- 0
                 false_neg <- 0
                 totalRT_correct <- 0
+                nRT_correct <- 0
                 totalRT_incorrect <- 0
+                nRT_incorrect <- 0
                 miss <- 0
                 if(VariableExists("gResponseLabelLeft"))
                 {
@@ -308,6 +312,7 @@ define TNT() {
                 while (i <= gParams.numStimsAct) {
                     reacted <- 0
                     reaction <- 0
+                    rT <- 0
 
                     ## Defensive unbold before each trial
                     if(VariableExists("gResponseLabelLeft"))
@@ -355,28 +360,40 @@ define TNT() {
                         true_pos <- true_pos + 1
                         corr <- 1
                         respType <- "true positive"
-                        totalRT_correct <- totalRT_correct + rT
+                        if (reacted == 1) {
+                            totalRT_correct <- totalRT_correct + rT
+                            nRT_correct <- nRT_correct + 1
+                        }
                     }
                     if (reaction and not(target)) {
                         incorrects <- incorrects + 1
                         false_pos <- false_pos + 1
                         corr <- 0
                         respType <- "false positive"
-                        totalRT_incorrect <- totalRT_incorrect + rT
+                        if (reacted == 1) {
+                            totalRT_incorrect <- totalRT_incorrect + rT
+                            nRT_incorrect <- nRT_incorrect + 1
+                        }
                     }
                     if (not(reaction) and not(target)) {
                         corrects <- corrects + 1
                         true_neg <- true_neg + 1
                         corr <- 1
                         respType <- "true negative"
-                        totalRT_correct <- totalRT_correct + rT
+                        if (reacted == 1) {
+                            totalRT_correct <- totalRT_correct + rT
+                            nRT_correct <- nRT_correct + 1
+                        }
                     }
                     if (not(reaction) and target) {
                         incorrects <- incorrects + 1
                         false_neg <- false_neg + 1
                         corr <- 0
                         respType <- "false negative"
-                        totalRT_incorrect <- totalRT_incorrect + rT
+                        if (reacted == 1) {
+                            totalRT_incorrect <- totalRT_incorrect + rT
+                            nRT_incorrect <- nRT_incorrect + 1
+                        }
                     }
                     if (reacted == 0) {
                         miss <- miss + 1
@@ -455,6 +472,7 @@ define TNT() {
                 while (i <= gParams.numStimsAct) {
                     reacted <- 0
                     reaction <- 0
+                    rT <- 0
 
                     ## Defensive unbold before each trial
                     if(VariableExists("gResponseLabelLeft"))
@@ -502,28 +520,40 @@ define TNT() {
                         true_pos <- true_pos + 1
                         corr <- 1
                         respType <- "true positive"
-                        totalRT_correct <- totalRT_correct + rT
+                        if (reacted == 1) {
+                            totalRT_correct <- totalRT_correct + rT
+                            nRT_correct <- nRT_correct + 1
+                        }
                     }
                     if (reaction and not(target)) {
                         incorrects <- incorrects + 1
                         false_pos <- false_pos + 1
                         corr <- 0
                         respType <- "false positive"
-                        totalRT_incorrect <- totalRT_incorrect + rT
+                        if (reacted == 1) {
+                            totalRT_incorrect <- totalRT_incorrect + rT
+                            nRT_incorrect <- nRT_incorrect + 1
+                        }
                     }
                     if (not(reaction) and not(target)) {
                         corrects <- corrects + 1
                         true_neg <- true_neg + 1
                         corr <- 1
                         respType <- "true negative"
-                        totalRT_correct <- totalRT_correct + rT
+                        if (reacted == 1) {
+                            totalRT_correct <- totalRT_correct + rT
+                            nRT_correct <- nRT_correct + 1
+                        }
                     }
                     if (not(reaction) and target) {
                         incorrects <- incorrects + 1
                         false_neg <- false_neg + 1
                         corr <- 0
                         respType <- "false negative"
-                        totalRT_incorrect <- totalRT_incorrect + rT
+                        if (reacted == 1) {
+                            totalRT_incorrect <- totalRT_incorrect + rT
+                            nRT_incorrect <- nRT_incorrect + 1
+                        }
                     }
                     if (reacted == 0) {
                         miss <- miss + 1
@@ -600,6 +630,7 @@ define TNT() {
                 while (i <= gParams.numStimsAct) {
                     reacted <- 0
                     reaction <- 0
+                    rT <- 0
 
                     ## Defensive unbold before each trial
                     if(VariableExists("gResponseLabelLeft"))
@@ -647,28 +678,40 @@ define TNT() {
                         true_pos <- true_pos + 1
                         corr <- 1
                         respType <- "true positive"
-                        totalRT_correct <- totalRT_correct + rT
+                        if (reacted == 1) {
+                            totalRT_correct <- totalRT_correct + rT
+                            nRT_correct <- nRT_correct + 1
+                        }
                     }
                     if (reaction and not(target)) {
                         incorrects <- incorrects + 1
                         false_pos <- false_pos + 1
                         corr <- 0
                         respType <- "false positive"
-                        totalRT_incorrect <- totalRT_incorrect + rT
+                        if (reacted == 1) {
+                            totalRT_incorrect <- totalRT_incorrect + rT
+                            nRT_incorrect <- nRT_incorrect + 1
+                        }
                     }
                     if (not(reaction) and not(target)) {
                         corrects <- corrects + 1
                         true_neg <- true_neg + 1
                         corr <- 1
                         respType <- "true negative"
-                        totalRT_correct <- totalRT_correct + rT
+                        if (reacted == 1) {
+                            totalRT_correct <- totalRT_correct + rT
+                            nRT_correct <- nRT_correct + 1
+                        }
                     }
                     if (not(reaction) and target) {
                         incorrects <- incorrects + 1
                         false_neg <- false_neg + 1
                         corr <- 0
                         respType <- "false negative"
-                        totalRT_incorrect <- totalRT_incorrect + rT
+                        if (reacted == 1) {
+                            totalRT_incorrect <- totalRT_incorrect + rT
+                            nRT_incorrect <- nRT_incorrect + 1
+                        }
                     }
                     if (reacted == 0) {
                         miss <- miss + 1
@@ -742,7 +785,9 @@ define TNT() {
         false_pos <- 0
         false_neg <- 0
         totalRT_correct <- 0
+        nRT_correct <- 0
         totalRT_incorrect <- 0
+        nRT_incorrect <- 0
         miss <- 0
 
         # # # # # Experiment Initialization # # # # #
@@ -789,6 +834,7 @@ define TNT() {
             while (i <= gParams.numStimsAct) {
                 reacted <- 0
                 reaction <- 0
+                rT <- 0
 
                 ## Defensive unbold before each trial
                 if(VariableExists("gResponseLabelLeft"))
@@ -837,28 +883,40 @@ define TNT() {
                     true_pos <- true_pos + 1
                     corr <- 1
                     respType <- "true positive"
-                    totalRT_correct <- totalRT_correct + rT
+                    if (reacted == 1) {
+                        totalRT_correct <- totalRT_correct + rT
+                        nRT_correct <- nRT_correct + 1
+                    }
                 }
                 if (reaction and not(target)) {
                     incorrects <- incorrects + 1
                     false_pos <- false_pos + 1
                     corr <- 0
                     respType <- "false positive"
-                    totalRT_incorrect <- totalRT_incorrect + rT
+                    if (reacted == 1) {
+                        totalRT_incorrect <- totalRT_incorrect + rT
+                        nRT_incorrect <- nRT_incorrect + 1
+                    }
                 }
                 if (not(reaction) and not(target)) {
                     corrects <- corrects + 1
                     true_neg <- true_neg + 1
                     corr <- 1
                     respType <- "true negative"
-                    totalRT_correct <- totalRT_correct + rT
+                    if (reacted == 1) {
+                        totalRT_correct <- totalRT_correct + rT
+                        nRT_correct <- nRT_correct + 1
+                    }
                 }
                 if (not(reaction) and target) {
                     incorrects <- incorrects + 1
                     false_neg <- false_neg + 1
                     corr <- 0
                     respType <- "false negative"
-                    totalRT_incorrect <- totalRT_incorrect + rT
+                    if (reacted == 1) {
+                        totalRT_incorrect <- totalRT_incorrect + rT
+                        nRT_incorrect <- nRT_incorrect + 1
+                    }
                 }
                 if (reacted == 0) {
                     miss <- miss + 1
@@ -910,6 +968,7 @@ define TNT() {
             while (i <= gParams.numStimsAct) {
                 reacted <- 0
                 reaction <- 0
+                rT <- 0
 
                 ## Defensive unbold before each trial
                 if(VariableExists("gResponseLabelLeft"))
@@ -959,28 +1018,40 @@ define TNT() {
                     true_pos <- true_pos + 1
                     corr <- 1
                     respType <- "true positive"
-                    totalRT_correct <- totalRT_correct + rT
+                    if (reacted == 1) {
+                        totalRT_correct <- totalRT_correct + rT
+                        nRT_correct <- nRT_correct + 1
+                    }
                 }
                 if (reaction and not(target)) {
                     incorrects <- incorrects + 1
                     false_pos <- false_pos + 1
                     corr <- 0
                     respType <- "false positive"
-                    totalRT_incorrect <- totalRT_incorrect + rT
+                    if (reacted == 1) {
+                        totalRT_incorrect <- totalRT_incorrect + rT
+                        nRT_incorrect <- nRT_incorrect + 1
+                    }
                 }
                 if (not(reaction) and not(target)) {
                     corrects <- corrects + 1
                     true_neg <- true_neg + 1
                     corr <- 1
                     respType <- "true negative"
-                    totalRT_correct <- totalRT_correct + rT
+                    if (reacted == 1) {
+                        totalRT_correct <- totalRT_correct + rT
+                        nRT_correct <- nRT_correct + 1
+                    }
                 }
                 if (not(reaction) and target) {
                     incorrects <- incorrects + 1
                     false_neg <- false_neg + 1
                     corr <- 0
                     respType <- "false negative"
-                    totalRT_incorrect <- totalRT_incorrect + rT
+                    if (reacted == 1) {
+                        totalRT_incorrect <- totalRT_incorrect + rT
+                        nRT_incorrect <- nRT_incorrect + 1
+                    }
                 }
                 if (reacted == 0) {
                     miss <- miss + 1
@@ -1032,6 +1103,7 @@ define TNT() {
             while (i <= gParams.numStimsAct) {
                 reacted <- 0
                 reaction <- 0
+                rT <- 0
 
                 ## Defensive unbold before each trial
                 if(VariableExists("gResponseLabelLeft"))
@@ -1081,28 +1153,40 @@ define TNT() {
                     true_pos <- true_pos + 1
                     corr <- 1
                     respType <- "true positive"
-                    totalRT_correct <- totalRT_correct + rT
+                    if (reacted == 1) {
+                        totalRT_correct <- totalRT_correct + rT
+                        nRT_correct <- nRT_correct + 1
+                    }
                 }
                 if (reaction and not(target)) {
                     incorrects <- incorrects + 1
                     false_pos <- false_pos + 1
                     corr <- 0
                     respType <- "false positive"
-                    totalRT_incorrect <- totalRT_incorrect + rT
+                    if (reacted == 1) {
+                        totalRT_incorrect <- totalRT_incorrect + rT
+                        nRT_incorrect <- nRT_incorrect + 1
+                    }
                 }
                 if (not(reaction) and not(target)) {
                     corrects <- corrects + 1
                     true_neg <- true_neg + 1
                     corr <- 1
                     respType <- "true negative"
-                    totalRT_correct <- totalRT_correct + rT
+                    if (reacted == 1) {
+                        totalRT_correct <- totalRT_correct + rT
+                        nRT_correct <- nRT_correct + 1
+                    }
                 }
                 if (not(reaction) and target) {
                     incorrects <- incorrects + 1
                     false_neg <- false_neg + 1
                     corr <- 0
                     respType <- "false negative"
-                    totalRT_incorrect <- totalRT_incorrect + rT
+                    if (reacted == 1) {
+                        totalRT_incorrect <- totalRT_incorrect + rT
+                        nRT_incorrect <- nRT_incorrect + 1
+                    }
                 }
                 if (reacted == 0) {
                     miss <- miss + 1
@@ -1128,8 +1212,14 @@ define TNT() {
                 restTime <- restTime - 1
             }
         }
-        meanRT_correct <- totalRT_correct / true_pos
-        meanRT_incorrect <- totalRT_incorrect / false_pos
+        meanRT_correct <- "NA"
+        if (nRT_correct > 0) {
+            meanRT_correct <- totalRT_correct / nRT_correct
+        }
+        meanRT_incorrect <- "NA"
+        if (nRT_incorrect > 0) {
+            meanRT_incorrect <- totalRT_incorrect / nRT_incorrect
+        }
 
         text <- "Participant number : " + gSubNum + CR(1) + CR(1) +
             "Type : " + type + "-back" + CR(1) +
