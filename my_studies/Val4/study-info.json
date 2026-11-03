@@ -83,6 +83,12 @@
       "included": true,
       "test_name": "vsearch",
       "test_path": "vsearch"
+    },
+    {
+      "display_name": "vsearch-customize",
+      "included": true,
+      "test_name": "vsearch-customize",
+      "test_path": "vsearch-customize"
     }
   ],
   "upload_server_url": "",
