@@ -1,0 +1,51 @@
+subnum,order,time,qnum,ques,dim,valence,resp,rt
+VAL2_1002,1,60062,26,I have little to say.,1,-1,3,28639
+VAL2_1002,2,62716,34,I change my mood a lot.,4,-1,4,2650
+VAL2_1002,3,64939,19,I seldom feel blue.,4,+1,2,2221
+VAL2_1002,4,66432,5,I have a rich vocabulary.,5,+1,3,1490
+VAL2_1002,5,68223,36,I don't like to draw attention to myself.,1,-1,4,1789
+VAL2_1002,6,69659,11,I feel comfortable around people.,1,+1,3,1433
+VAL2_1002,7,71234,39,I have frequent mood swings.,4,-1,2,1573
+VAL2_1002,8,73226,16,I keep in the background.,1,-1,3,1990
+VAL2_1002,9,74392,21,I start conversations.,1,+1,4,1164
+VAL2_1002,10,75307,43,I follow a schedule.,3,+1,3,877
+VAL2_1002,11,76232,14,I worry about things.,4,-1,4,922
+VAL2_1002,12,77325,2,I feel little concern for others.,2,-1,3,1091
+VAL2_1002,13,78112,33,I like order.,3,+1,4,784
+VAL2_1002,14,79032,47,I make people feel at ease.,2,+1,2,917
+VAL2_1002,15,79740,40,I use difficult words.,5,+1,3,706
+VAL2_1002,16,80492,48,I am exacting in my work.,3,+1,2,749
+VAL2_1002,17,82034,31,I talk to a lot of different people at parties.,1,+1,4,1540
+VAL2_1002,18,83033,7,I am interested in people.,2,+1,4,997
+VAL2_1002,19,85251,35,I am quick to understand things.,5,+1,3,2216
+VAL2_1002,20,86222,25,I have excellent ideas.,5,+1,4,969
+VAL2_1002,21,87752,10,I have difficulty understanding abstract ideas.,5,-1,4,1528
+VAL2_1002,22,88791,9,I am relaxed most of the time.,4,+1,4,1037
+VAL2_1002,23,89602,27,I have a soft heart.,2,+1,4,808
+VAL2_1002,24,90575,15,I have a vivid imagination.,5,+1,4,971
+VAL2_1002,25,91242,22,I am not interested in other people's problems.,2,-1,3,665
+VAL2_1002,26,91985,50,I am full of ideas.,5,+1,4,740
+VAL2_1002,27,92606,23,I get chores done right away.,3,+1,3,619
+VAL2_1002,28,93793,46,I am quiet around strangers.,1,-1,4,1185
+VAL2_1002,29,94645,6,I don't talk a lot.,1,-1,3,849
+VAL2_1002,30,95390,29,I get upset easily.,4,-1,2,743
+VAL2_1002,31,96145,1,I am the life of the party.,1,+1,2,752
+VAL2_1002,32,97221,41,I don't mind being the center of attention.,1,+1,3,1073
+VAL2_1002,33,98185,12,I insult people.,2,-1,4,962
+VAL2_1002,34,100287,32,I am not really interested in others.,2,-1,3,2099
+VAL2_1002,35,101538,4,I get stressed out easily.,4,-1,3,1249
+VAL2_1002,36,102442,13,I pay attention to details.,3,+1,3,902
+VAL2_1002,37,103455,24,I am easily disturbed.,4,-1,3,1011
+VAL2_1002,38,104820,17,I sympathize with others' feelings.,2,+1,4,1362
+VAL2_1002,39,105501,3,I am always prepared.,3,+1,4,679
+VAL2_1002,40,106358,44,I get irritated easily.,4,-1,3,855
+VAL2_1002,41,107337,45,I spend time reflecting on things.,5,+1,4,976
+VAL2_1002,42,108433,18,I make a mess of things.,3,-1,4,1094
+VAL2_1002,43,110895,30,I do not have a good imagination.,5,-1,4,2460
+VAL2_1002,44,112775,20,I am not interested in abstract ideas.,5,-1,4,1877
+VAL2_1002,45,114159,38,I shirk my duties.,3,-1,3,1382
+VAL2_1002,46,115602,42,I feel others' emotions.,2,+1,3,1441
+VAL2_1002,47,116730,28,I often forget to put things back in their proper place.,3,-1,4,1126
+VAL2_1002,48,120250,37,I take time out for others.,2,+1,3,3518
+VAL2_1002,49,121479,49,I often feel blue.,4,-1,3,1227
+VAL2_1002,50,122356,8,I leave my belongings around.,3,-1,3,875

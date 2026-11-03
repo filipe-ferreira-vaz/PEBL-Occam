@@ -5,5 +5,8 @@
   "preview": "Press any key to see preview",
   "prompt": "PLANNING PHASE: Press the space bar when you have finished making your plan. Then solve the maze using arrow keys",
   "solving": "SOLVING PHASE: move from S to E using arrow keys on keyboard",
-  "debrief": "This part of the study is complete. Press any key to continue."
+  "debrief": "This part of the study is complete. Press any key to continue.",
+  "PRACTICEDONE": "The practice is over.  You can repeat the practice maze as many times as you like, or start the real test.  In the real test your solutions will be recorded and will count: plan each maze first, then solve it by the shortest path you can, as quickly as possible and without mistakes.",
+  "PRACTICEREPEAT": "Repeat the practice",
+  "PRACTICESTART": "Start the real test"
 }

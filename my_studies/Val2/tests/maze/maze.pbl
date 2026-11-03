@@ -111,11 +111,24 @@ define Start(p)
 
   ##now have them practice it
 
-  ##remake a random maze because it causes artificts otherwise.
-  SeedRNG(100)
-  practice <- MakeMaze(5,5,[1,1],[5,5], gVideoWidth/2,gVideoHeight/2+55,400,400)
-  practice.id <- "PRACTICE"		           
-  DoMazeTrial(practice)  
+  ##repeat the practice as often as needed, or start the real test.
+  repeatPractice <- 1
+  while(repeatPractice)
+  {
+    ##remake a random maze because it causes artificts otherwise.
+    ##(a fresh maze object each time, same seed so every repeat is run
+    ## exactly like the first practice)
+    SeedRNG(100)
+    practice <- MakeMaze(5,5,[1,1],[5,5], gVideoWidth/2,gVideoHeight/2+55,400,400)
+    practice.id <- "PRACTICE"
+    LSLMarker("block_practice_start")
+    DoMazeTrial(practice)
+    LSLMarker("block_practice_end")
+
+    repeatPractice <- PracticeChoice(PracticeString("PRACTICEDONE",
+       "The practice is over.  You can repeat the practice maze as many times as you like, or start the real test.  In the real test your solutions will be recorded and will count: plan each maze first, then solve it by the shortest path you can, as quickly as possible and without mistakes."),
+       gWin,30)
+  }
 
 
   inst.text <- gStrings.inst2
@@ -1157,6 +1170,62 @@ define GetStrings(lang)
 {
   gStrings <- GetTranslations("maze", lang)
 }
+
+## Practice choice screen: shows text and two boxes to click with the mouse,
+## one to repeat the practice and one to start the real test.
+## Returns 1 (repeat the practice) or 0 (start the real test).
+define PracticeChoice(text, win, fontsize:30)
+{
+  repeatText <- PracticeString("PRACTICEREPEAT", "Repeat the practice")
+  startText  <- PracticeString("PRACTICESTART", "Start the real test")
+
+  bgcol <- win.BGCOLOR
+  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
+  {
+    fgcol <- MakeColor("white")
+  } else {
+    fgcol <- MakeColor("black")
+  }
+
+  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
+  Move(bg, gVideoWidth/2, gVideoHeight/2)
+  AddObject(bg, win)
+  box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
+
+  y <- gVideoHeight - 110
+  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
+  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
+  w <- Max([repeatLab.width, startLab.width]) + 60
+  Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
+  Move(startLab, gVideoWidth/2 + w/2 + 30, y)
+  repeatBox <- Rectangle(gVideoWidth/2 - w/2 - 30, y, w, 70, fgcol, 0)
+  startBox  <- Rectangle(gVideoWidth/2 + w/2 + 30, y, w, 70, fgcol, 0)
+  AddObject(repeatBox, win)
+  AddObject(startBox, win)
+
+  Draw()
+  ShowCursor(1)
+  choice <- WaitForClickOnTarget([repeatBox, startBox], [1, 0])
+  LSLMarker("practice_choice_" + choice)
+
+  RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
+  Draw()
+  return choice
+}
+
+## Text from the translation file, or the English default if the current
+## language file does not have it.
+define PracticeString(key, fallback)
+{
+  out <- fallback
+  if(PropertyExists(gStrings, key))
+  {
+    out <- GetProperty(gStrings, key)
+  }
+  return out
+}
+
+
 
 ##maze size and position on the screen is determined by properties:
 ## x y (center)

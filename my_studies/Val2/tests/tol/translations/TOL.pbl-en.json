@@ -15,5 +15,12 @@
 "RESETLAB": "Click screen to restart problem.",
 "TIMEOUTLAB": "You ran out of time.",
 "DEBRIEFING": "Thank you for participating. The experiment is now complete.  Press any key to exit.",
-"CONTINUEFAIL": "Click screen to move on to the next problem."
+"CONTINUEFAIL": "Click screen to move on to the next problem.",
+"PRACTICEINTRO": "First you will solve 3 easy practice problems, which are not scored.",
+"PRACTICELABEL": "Practice problem",
+"PRACTICECONTINUE": "Practice problem complete. 
+Click mouse to continue.",
+"PRACTICEDONE": "The practice is over.  You can repeat the practice as many times as you like, or start the real test.  In the real test your moves will be recorded.  The test begins as soon as you click.",
+"PRACTICEREPEAT": "Repeat the practice",
+"PRACTICESTART": "Start the real test"
 }

@@ -1,0 +1,416 @@
+##PEBL Comfort and physiological state scales.
+## This asks four questions related to present comfort level,
+## hot/cold, wet/dry, and ambient temperature.
+
+define Start(p)
+{
+  gScriptName <- "PEBL Affect Grid"
+
+  parpairs <- [["fg","grey20"],
+               ["bg","white"],
+               ["squaresize",60],
+               ["border",5]]
+
+  gParams <- CreateParameters(parpairs,gParamFile)
+  gParams.responsemode <- "none"  ## This task uses custom grid interaction, not standard response system
+
+  gSleepEasy <- 1
+  gWin <- MakeWindow()
+  InitializeLSL(gWin)  ## Initialize LSL outlet if --lsl flag was used
+  BeepsStart()  ## auto-added by setup-study.bat
+  InitializeUpload()  ## Initialize token-based hosting if upload.json exists
+
+  if(gSubNum+""=="0")
+   {
+     gSubNum <- GetSubNum(gWin)
+   }
+
+  ## Load translation strings
+  GetStrings(gLanguage)
+
+  ## Create basic layout for header positioning (no response system needed)
+  gLayout <- CreateLayout("affectgrid", gWin, gParams)
+  gLayout.header.text <- gStrings.header
+  gLayout.header.visible <- 1
+  gLayout.subheader.text <- gStrings.subheader
+  gLayout.subheader.visible <- 1
+  gLayout.footer.visible <- 0
+
+  LSLMarker("task_start")
+  out <-  AffectGrid(gParams.squaresize, gParams.border, gParams.fg, gParams.bg)
+  LSLMarker("task_end_pleasure" + First(out) + "_arousal" + Second(out))
+
+  MakeDirectory("data")
+  fileOut <- GetNewDataFile(gSubNum, gWin, "affectgrid", "csv", "subnum,timestamp,pleasure,arousal")
+  FilePrint(fileOut, gSubNum + "," + TimeStamp() + "," + ConcatenateList(out,","))
+  FileClose(fileOut)
+
+  ## Upload data files
+  Print("Uploading data files...")
+  uploadResult <- UploadFile(gSubNum, fileOut.filename)
+  Print(uploadResult)
+
+  ## Finalize LSL
+  BeepsEnd()  ## auto-added by setup-study.bat
+  FinalizeLSL()
+}
+
+
+
+define AffectGrid(squaresize:60,border:5, fgcol:"red",bgcol:"white")
+{
+
+
+
+
+   fg <- MakeColor(fgcol)
+   bg <- MakeColor(bgcol)
+   hilight <- MakeColor("red")
+   squares <- []
+   affect <- []
+
+   ## Instruction text is displayed in layout subheader (set in Start())
+
+    xmin <- gVideoWidth/2 - 4* (squaresize+border)
+    ymin <- gVideoHeight/2-4* (squaresize+border)
+    bgsquare <- Square(gVideoWidth/2,gVideoHeight/2,squaresize*9+border*10,bg,1)
+    AddObject(bgsquare,gWin)
+    ##make a 9x9 grid
+    count <- 1
+    loop(i,9) ##i is horizontal: pleasure
+    {
+      loop(j,9)#j is vertical (but upside down): arousal
+      {
+
+           tmp <- Square(xmin+(i-1)*(squaresize+border),
+	                 ymin+(j-1)*(squaresize+border),
+			 squaresize,fg,1)
+	   AddObject(tmp,gWin)
+	   PushOnEnd(squares,tmp)
+	   PushOnEnd(affect,[i,10-j,count])
+           count <- count + 1
+      }
+
+    }
+
+   bottom <- EasyLabel(gStrings.high_sleepiness,gVideoWidth/2,gVideoHeight/2+(squaresize+border)*5,gWin,25)
+   top <- EasyLabel(gStrings.high_arousal,gVideoWidth/2,gVideoHeight/2-(squaresize+border)*5,gWin,25)
+   right  <- EasyLabel(gStrings.pleasant_feelings,gVideoWidth/2+(squaresize+border)*5,gVideoHeight/2,gWin,25)
+   left  <- EasyLabel(gStrings.unpleasant_feelings,gVideoWidth/2-(squaresize+border)*5,gVideoHeight/2,gWin,25)
+   right.rotation <- 270
+   left.rotation <- 270
+
+    bl  <- EasyLabel(gStrings.depression,gVideoWidth/2-(squaresize+border)*5,
+                                 gVideoHeight/2+(squaresize+border)*5,gWin,20)
+    br  <- EasyLabel(gStrings.relaxation,gVideoWidth/2+(squaresize+border)*5,
+                                     gVideoHeight/2+(squaresize+border)*5,gWin,20)
+    tl  <- EasyLabel(gStrings.stress,gVideoWidth/2-(squaresize+border)*5,
+                             gVideoHeight/2-(squaresize+border)*5,gWin,20)
+    tr  <- EasyLabel(gStrings.excitement,gVideoWidth/2+(squaresize+border)*5,
+                                     gVideoHeight/2-(squaresize+border)*5,gWin,20)
+    ok <- EasyLabel(gStrings.ok,gVideoWidth/2,gVideoHeight-150,gWin,40)
+   hit <-  Square(0,0, squaresize,hilight,1)
+   AddObject(hit,gWin)
+   Hide(hit)
+   Hide(ok)
+
+   added <- 0
+   Draw()
+   lastclick <- 0
+   cont <- 1
+   LSLMarker("grid_display")
+   while(cont == 1)
+   {
+
+      Draw()
+      resp <- WaitForClickOnTarget(squares,affect)
+      if(resp == "OK")
+      {
+        resp <- lastclick
+	cont <- 0
+        LSLMarker("response_confirmed_pleasure" + First(resp) + "_arousal" + Second(resp))
+      }else{
+
+        lastclick <- resp
+	square <- Nth(squares,Third(resp))
+	Move(hit,square.x,square.y)
+	Show(hit)
+        LSLMarker("grid_click_pleasure" + First(resp) + "_arousal" + Second(resp))
+
+      }
+
+      if(not added)
+       {
+        squares <-Append(squares,ok)
+        affect <- Append(affect,"OK")
+	Show(ok)
+	added <- 1
+       }
+   }
+   return SubList(resp,1,2)
+}
+
+
+define GetStrings(lang)
+{
+  gStrings <- GetTranslations("affectgrid", lang)
+}
+
+
+## >>> BEGIN beeps.pbl (auto-copied, do not edit)
+##########################################################
+## beeps.pbl -- reusable pure-tone (sine wave) functions
+##
+## PEBL has no import statement, so this file is COPIED into each test
+## by setup-study.bat (from <study>/utils/beeps.pbl). Edit only that copy,
+## then re-run setup-study.bat.
+##
+## Standard start/end beeps: setup-study.bat also inserts
+##     BeepsStart()   right after the test's LSL setup line (window just opened)
+##     BeepsEnd()     right before the test's LSL shutdown line (test finished)
+## so every synced test beeps at its start and end automatically. BeepsEnd()
+## also saves all beeps to data/<subject>/beeps-<subject>.csv.
+## To opt a test out of the automatic calls, put this line anywhere in it:
+##     ## beeps: no auto calls
+## (the functions below stay available for calling by hand).
+##
+## Why not MakeSineWave()?  In this PEBL build (2.4, Windows) MakeSineWave()
+## returns a sound with no audio buffer: it plays for 0 ms. Instead, each
+## tone is written once to a .wav file (via a small PowerShell helper) in the
+## test's folder, e.g. tone-1000Hz-50ms-a0.8.wav, and loaded with LoadSound().
+## Later runs reuse the cached file, so the PowerShell call only happens the
+## first time a given frequency/duration/amplitude is requested.
+##
+## Functions:
+##   MakeTone(freq, durationMs, amplitude:0.8)
+##        Returns a sound object you can pass to PlayTone/PlayBackground.
+##        Call it early (e.g. during setup) to avoid the one-time ~0.3 s
+##        generation delay and the up-to-1 s clock sync (see below) at
+##        play time.
+##   PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+##        Plays a tone and returns its onset timestamp (GetTime(), ms).
+##        blocking=1 waits for the tone to finish (use it right before the
+##        script exits). Each play is recorded in gToneLog.
+##   Beep(label:"beep")
+##        Shortcut: 1000 Hz, 50 ms, amplitude 0.8, non-blocking.
+##   BeepsStart() / BeepsEnd()
+##        Standard 1000 Hz / 50 ms start and end beeps (see above). The end
+##        beep is blocking, so it finishes before the test closes.
+##   GetToneLog()
+##        List of [label, freq, durationMs, amplitude, timestamp, clocktime]
+##        for every tone played so far.
+##
+## timestamp comes from GetTime(), so it is on the same clock as the RTs and
+## abstime values PEBL tests already record.
+## clocktime is the PC's local clock time, "YYYY-MM-DD HH:MM:SS.mmm".
+## PEBL's TimeStamp() only has 1 s resolution (and GetTimeOfDay() returns a
+## broken value in this build), so on first use the library waits for the PC
+## clock's second to tick over (up to 1 s), records GetTime() at that instant,
+## and afterwards computes clock time = that second + elapsed GetTime().
+##########################################################
+
+define MakeTone(freq, durationMs, amplitude:0.8)
+{
+  ToneClockSync()
+  key <- freq + "Hz-" + durationMs + "ms-a" + amplitude
+
+  ## reuse an already-loaded sound
+  if(not VariableExists("gToneCache"))
+  {
+    gToneCache <- []
+  }
+  sound <- 0
+  loop(pair, gToneCache)
+  {
+    if(First(pair) == key)
+    {
+      sound <- Second(pair)
+    }
+  }
+
+  if(IsNumber(sound))
+  {
+    filename <- "tone-" + key + ".wav"
+    if(not FileExists(filename))
+    {
+      ToneWriteHelper()
+      cmd <- "powershell -NoProfile -ExecutionPolicy Bypass -File beeps-maketone.ps1" +
+             " -f " + freq + " -d " + durationMs + " -a " + amplitude + " -o " + filename
+      SystemCall(cmd, "")
+      if(not FileExists(filename))
+      {
+        SignalFatalError("beeps.pbl: could not create " + filename +
+                         " (PowerShell is required to generate tones)")
+      }
+    }
+    sound <- LoadSound(filename)
+    gToneCache <- Append(gToneCache, [key, sound])
+  }
+  return(sound)
+}
+
+
+define PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+{
+  sound <- MakeTone(freq, durationMs, amplitude)
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+
+  t <- GetTime()
+  if(blocking)
+  {
+    PlayForeground(sound)
+  } else {
+    PlayBackground(sound)
+  }
+
+  gToneLog <- Append(gToneLog, [label, freq, durationMs, amplitude, t, ToneClockTime(t)])
+  return(t)
+}
+
+
+define Beep(label:"beep")
+{
+  return(PlayTone(1000, 50, 0.8, 0, label))
+}
+
+
+## Syncs GetTime() to the PC clock once (waits up to 1 s the first time).
+## Returns [GetTime() at a whole second, that second as ms since midnight].
+define ToneClockSync()
+{
+  if(not VariableExists("gToneClockAnchor"))
+  {
+    ts0 <- TimeStamp()
+    ts <- ts0
+    while(ts == ts0)
+    {
+      ts <- TimeStamp()
+    }
+    t <- GetTime()
+    gToneClockAnchor <- [t, Nth(ToneParseTimeStamp(ts),4)*1000]
+  }
+  return(gToneClockAnchor)
+}
+
+
+## Converts a GetTime() value to PC local clock time "YYYY-MM-DD HH:MM:SS.mmm"
+define ToneClockTime(t)
+{
+  anchor <- ToneClockSync()
+  date <- ToneParseTimeStamp(TimeStamp())
+  ms <- Mod(Second(anchor) + t - First(anchor), 86400000)
+  clock <- Nth(date,1) + "-" + ZeroPad(Nth(date,2),2) + "-" + ZeroPad(Nth(date,3),2) + " " +
+           ZeroPad(Floor(ms/3600000),2) + ":" + ZeroPad(Floor(Mod(ms,3600000)/60000),2) + ":" +
+           ZeroPad(Floor(Mod(ms,60000)/1000),2) + "." + ZeroPad(Mod(ms,1000),3)
+  return(clock)
+}
+
+
+## Parses TimeStamp() text like "Fri Oct 09 20:31:36 2026"
+## into [year, month, day, seconds since midnight]
+define ToneParseTimeStamp(ts)
+{
+  tokens <- []
+  loop(tok, SplitString(ts, " "))
+  {
+    if(tok != "")
+    {
+      tokens <- Append(tokens, tok)
+    }
+  }
+  month <- 1
+  i <- 1
+  loop(name, ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+  {
+    if(name == Nth(tokens,2))
+    {
+      month <- i
+    }
+    i <- i + 1
+  }
+  hms <- SplitString(Nth(tokens,4), ":")
+  secs <- ToNumber(Nth(hms,1))*3600 + ToNumber(Nth(hms,2))*60 + ToNumber(Nth(hms,3))
+  return([ToNumber(Nth(tokens,5)), month, ToNumber(Nth(tokens,3)), secs])
+}
+
+
+## Standard start beep (inserted automatically by setup-study.bat)
+define BeepsStart()
+{
+  MakeTone(1000, 50)   ## generate/load and sync the clock before playing
+  return(Beep("beep_start"))
+}
+
+
+## Standard end beep (inserted automatically by setup-study.bat).
+## Blocking, then saves every beep of this run to data/<subject>/beeps-<subject>.csv
+define BeepsEnd()
+{
+  t <- PlayTone(1000, 50, 0.8, 1, "beep_end")
+  BeepsWriteLog()
+  return(t)
+}
+
+
+## Writes all beeps played so far to data/<subject>/beeps-<subject>.csv
+## (the same folder as the test's other data files; appends if it exists)
+define BeepsWriteLog()
+{
+  dir <- "data/" + gSubNum
+  if(not IsDirectory("data"))
+  {
+    MakeDirectory("data")
+  }
+  if(not IsDirectory(dir))
+  {
+    MakeDirectory(dir)
+  }
+  filename <- dir + "/beeps-" + gSubNum + ".csv"
+  isnew <- not FileExists(filename)
+  out <- FileOpenAppend(filename)
+  if(isnew)
+  {
+    FilePrint(out, "subnum,event,freq,durationms,amplitude,abstime,clocktime")
+  }
+  loop(tone, GetToneLog())
+  {
+    FilePrint(out, gSubNum + "," + ConcatenateList(tone, ","))
+  }
+  FileClose(out)
+  return(filename)
+}
+
+
+define GetToneLog()
+{
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+  return(gToneLog)
+}
+
+
+## Writes the PowerShell WAV generator next to the test (once).
+## Output: 44.1 kHz, 16-bit, mono PCM sine wave.
+define ToneWriteHelper()
+{
+  helper <- "beeps-maketone.ps1"
+  if(not FileExists(helper))
+  {
+    ps <- FileOpenOverwrite(helper)
+    FilePrint(ps, "param([double]$f,[int]$d,[double]$a,[string]$o)")
+    FilePrint(ps, "$sr=44100; $n=[int]($sr*$d/1000); $ms=New-Object IO.MemoryStream; $w=New-Object IO.BinaryWriter($ms)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36+$n*2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))")
+    FilePrint(ps, "$w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr*2)); $w.Write([int16]2); $w.Write([int16]16)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n*2))")
+    FilePrint(ps, "for($i=0;$i -lt $n;$i++){ $w.Write([int16][Math]::Round(32767*$a*[Math]::Sin(2*[Math]::PI*$f*$i/$sr))) }")
+    FilePrint(ps, "$w.Flush(); [IO.File]::WriteAllBytes((Join-Path (Get-Location) $o),$ms.ToArray())")
+    FileClose(ps)
+  }
+  return(helper)
+}
+## <<< END beeps.pbl

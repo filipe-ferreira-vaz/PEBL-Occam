@@ -1,6 +1,6 @@
 {
 "inst1": "In this test, you have to calculate, memorize and compare results from arithmetic problems. You will see a short arithmetic problem to solve. When you solve it, you will compare the results to another value and make a response using as shown at the bottom of the screen. The comparison depends on the 'back' condition (0, 1, or 2-back). These are:",
-"inst2": "Your practice is now complete. The real test will begin next.",
+"inst2": "Your practice is now complete. You can repeat the practice or start the real test.",
 "reminder": "- 0-back : compare the result to 50\n- 1-back : compare the result to the previous result\n- 2-back : compare the result to the two-back result\n\nRespond YES if the result is the same, and NO if it is different.",
 "ready1": "Be sure you have read the instructions carefully.",
 "ready2": "Make a response to continue. ",
@@ -24,5 +24,8 @@
 "tooslow": "Too Slow",
 "rest": "Take a short break",
 "debrief": "This task is now complete. Press any key to proceed",
-"TRIAL_COUNTER": "Trial <NUM> of <NUMTRIALS>"
+"TRIAL_COUNTER": "Trial <NUM> of <NUMTRIALS>",
+"PRACTICEDONE": "The practice is over. You can repeat the practice as many times as you like, or start the real test. In the real test your responses will be recorded and will count, so respond as quickly and accurately as you can.",
+"PRACTICEREPEAT": "Repeat the practice",
+"PRACTICESTART": "Start the real test"
 }
