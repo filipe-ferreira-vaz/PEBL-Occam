@@ -1,0 +1,10 @@
+Toulouse N-back Task, custom stimulus time version (Adapted to PEBL by Hu M., Mouratille D., Imbert J.-P. & Causse M.)
+Start it with run-TNT-custom-stimulus-time.bat in the study folder: it asks in the
+terminal for the stimulus duration in ms (default 2500), writes it to
+params/custom.par.json and runs the test with it.
+
+Data are saved to TNT-custom-stimulus-time\data\<code>\TNT-custom-stimulus-time-Report-X.txt
+and TNT-custom-stimulus-time\data\<code>\TNT-custom-stimulus-time-Details-X.csv
+
+To cite: Mandrick, K., Peysakhovich, V., Rémy, F., Lepron, E., & Causse, M. (2016). Neural and psychophysiological correlates of human performance under stress and high mental workload. Biological psychology, 121, 62-73. doi:10.1016/j.biopsycho.2016.10.002
+

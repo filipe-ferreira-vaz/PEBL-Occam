@@ -79,6 +79,12 @@
       "test_path": "TNT"
     },
     {
+      "display_name": "TNT-custom-stimulus-time",
+      "included": true,
+      "test_name": "TNT-custom-stimulus-time",
+      "test_path": "TNT-custom-stimulus-time"
+    },
+    {
       "display_name": "vsearch",
       "included": true,
       "test_name": "vsearch",
