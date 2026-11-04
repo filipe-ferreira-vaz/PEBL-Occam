@@ -25,6 +25,12 @@
       "test_path": "maze"
     },
     {
+      "display_name": "maze-custom",
+      "included": true,
+      "test_name": "maze-custom",
+      "test_path": "maze-custom"
+    },
+    {
       "display_name": "ptrails",
       "included": true,
       "test_name": "ptrails",

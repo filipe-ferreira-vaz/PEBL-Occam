@@ -1,0 +1,14 @@
+Maze-Solving Task (custom maze order)
+
+Start it with run-maze-custom.bat in the study folder: it asks in the
+terminal which of the 25 stored 15x15 mazes to present, in which order
+(e.g. 4,18,9), prints that order with each maze's shortest path, waits
+for Enter, writes the list to params/custom.par.json and runs the test.
+
+The Maze-Solving Task assesses spatial reasoning, planning, and navigation abilities using randomly generated mazes created with the Kruskal algorithm. Participants navigate from a marked start position (S) to an end position (E) using arrow keys to move through the maze corridors. The task allows optional planning time before the first move and tracks both planning time and solution time. Performance is measured by comparing the participant's path length and number of moves to the optimal (shortest) solution path. Standard 15x15 mazes can be used from a cached set for consistency across participants, or new mazes can be randomly generated. This task is useful for studying spatial problem-solving, executive function, planning strategies, and individual differences in navigation approaches.
+
+Data Output (in data/SUBNUM/):
+- maze-custom-SUBNUM.csv: one row per maze (shortest path, moves, path length, times)
+- maze-custom-log-SUBNUM.csv: every move
+- report-SUBNUM.txt: readable summary per maze
+- maze-custom-SUBNUM-N-mazeID.json: the maze presented in position N (maze ID), one file per maze
