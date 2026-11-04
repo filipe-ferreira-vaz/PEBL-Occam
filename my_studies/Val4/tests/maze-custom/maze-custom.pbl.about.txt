@@ -11,4 +11,5 @@ Data Output (in data/SUBNUM/):
 - maze-custom-SUBNUM.csv: one row per maze (shortest path, moves, path length, times)
 - maze-custom-log-SUBNUM.csv: every move
 - report-SUBNUM.txt: readable summary per maze
-- maze-custom-SUBNUM-N-mazeID.json: the maze presented in position N (maze ID), one file per maze
+- maze-custom-SUBNUM-YYYYMMDD-HHMMSS-N-mazeID.json: the maze presented in position N (maze ID)
+  in the run started at that date and time, one file per maze

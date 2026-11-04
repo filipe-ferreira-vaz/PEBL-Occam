@@ -15,7 +15,8 @@
 #   pebl2.exe tests/maze-custom/maze-custom.pbl -s <code> --language <lang> --pfile custom.par.json [--fullscreen]
 # (pebl2 looks for the --pfile file in the test's params/ folder)
 # from the test's folder, so data goes to tests/maze-custom/data/<code>/,
-# including one JSON file per maze presented.
+# including one JSON file per maze presented
+# (maze-custom-<code>-<YYYYMMDD-HHMMSS of the run>-<order>-maze<id>.json).
 # A row is added to logs/launcher-log.csv of the PEBL workspace, if there is one.
 
 param(

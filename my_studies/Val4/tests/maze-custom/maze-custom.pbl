@@ -164,6 +164,12 @@ define Start(p)
    mazeSize <- Max([gParams.mazepixelheight,gLayout.stimulusregion.height])
    LSLMarker("block_test_start")
    savedMazes <- []
+   ##date and time of this run, e.g. 20261104-190233, so a second run of the same
+   ##participant does not overwrite the first run's maze files
+   now <- ToneParseTimeStamp(TimeStamp())
+   secs <- Nth(now,4)
+   runStamp <- Nth(now,1) + ZeroPad(Nth(now,2),2) + ZeroPad(Nth(now,3),2) + "-" +
+               ZeroPad(Floor(secs/3600),2) + ZeroPad(Floor(Mod(secs,3600)/60),2) + ZeroPad(Mod(secs,60),2)
    loop(mazeid,mazelist)
    {
    LSLMarker("trial_maze" + mazeid + "_start")
@@ -219,8 +225,9 @@ define Start(p)
    
   if(gParams.savemazes)
   {
-    ##one JSON file per maze, e.g. maze-custom-PART_0001-1-maze9.json for the first maze (ID 9)
-    fname <- datadir + "maze-custom-" + gSubNum + "-" + (Length(savedMazes)+1) + "-maze" + testmaze.id + ".json"
+    ##one JSON file per maze, e.g. maze-custom-PART_0001-20261104-190233-1-maze9.json
+    ##for the first maze (ID 9) of the run started on 2026-11-04 at 19:02:33
+    fname <- datadir + "maze-custom-" + gSubNum + "-" + runStamp + "-" + (Length(savedMazes)+1) + "-maze" + testmaze.id + ".json"
     SaveMaze(testmaze,fname,0)
     PushOnEnd(savedMazes,fname)
 
