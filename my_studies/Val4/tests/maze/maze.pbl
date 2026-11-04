@@ -189,7 +189,10 @@ define Start(p)
         Print("making new maze:")
         testmaze <- MakeMaze(width,height,[1,1],[gParams.mazeheight,gParams.mazewidth],
                            gLayout.centerx,gLayout.centerY,mazeSize,mazeSize)
-			   
+        ##build the walls now (not in DoMazeTrial), so the best solution and the
+        ##saved copy are of the maze that is shown, not of the empty shell.
+        Kruskal(testmaze)
+
         if(not PropertyExists(testmaze,"bestsolution"))
         {
           t1 <- GetTime()
@@ -440,7 +443,8 @@ define ReadMaze(filename,xcenter,ycenter)
  obj.width <- ToInteger(obj.width)
  obj.x <- xcenter
  obj.y <- ycenter
- 
+ obj.generated <- 1 ##the walls come from the file, so Kruskal() must not rebuild them.
+
 ##rescale the maze based on gParams:
   obj.xrange <-gParams.mazePixelWidth
   obj.yrange <- gParams.mazePixelHeight
