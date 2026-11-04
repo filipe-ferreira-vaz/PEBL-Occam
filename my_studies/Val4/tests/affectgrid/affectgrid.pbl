@@ -71,9 +71,33 @@ define AffectGrid(squaresize:60,border:5, fgcol:"red",bgcol:"white")
 
    ## Instruction text is displayed in layout subheader (set in Start())
 
-    xmin <- gVideoWidth/2 - 4* (squaresize+border)
-    ymin <- gVideoHeight/2-4* (squaresize+border)
-    bgsquare <- Square(gVideoWidth/2,gVideoHeight/2,squaresize*9+border*10,bg,1)
+   ## Fit the grid, its edge labels and the OK button between the bottom of
+   ## the header/subheader and the bottom of the window. On small or DPI-scaled
+   ## screens the squares shrink so nothing covers the instruction text.
+   ## (The layout's stimulusRegion also reserves footer/response space this
+   ## task doesn't use, so only its top edge is used here.)
+    labelgap <- 45   ## room for the label rows above/below the grid
+    okspace <- 70    ## room for the OK button below the bottom labels
+    regtop <- gLayout.stimulusRegion.y
+    regheight <- gVideoHeight - 15 - regtop
+    maxcell <- Floor((regheight - 2*labelgap - okspace - border)/9)
+    if(maxcell < squaresize+border)
+    {
+      squaresize <- maxcell - border
+    }
+    cell <- squaresize+border
+    gridsize <- squaresize*9+border*10
+    half <- gridsize/2
+    blockheight <- gridsize + 2*labelgap + okspace
+    cx <- gVideoWidth/2
+    cy <- regtop + (regheight-blockheight)/2 + labelgap + half
+    labtop <- cy - half - labelgap/2
+    labbottom <- cy + half + labelgap/2
+    labside <- half + 35
+
+    xmin <- cx - 4*cell
+    ymin <- cy - 4*cell
+    bgsquare <- Square(cx,cy,gridsize,bg,1)
     AddObject(bgsquare,gWin)
     ##make a 9x9 grid
     count <- 1
@@ -93,22 +117,18 @@ define AffectGrid(squaresize:60,border:5, fgcol:"red",bgcol:"white")
 
     }
 
-   bottom <- EasyLabel(gStrings.high_sleepiness,gVideoWidth/2,gVideoHeight/2+(squaresize+border)*5,gWin,25)
-   top <- EasyLabel(gStrings.high_arousal,gVideoWidth/2,gVideoHeight/2-(squaresize+border)*5,gWin,25)
-   right  <- EasyLabel(gStrings.pleasant_feelings,gVideoWidth/2+(squaresize+border)*5,gVideoHeight/2,gWin,25)
-   left  <- EasyLabel(gStrings.unpleasant_feelings,gVideoWidth/2-(squaresize+border)*5,gVideoHeight/2,gWin,25)
+   bottom <- EasyLabel(gStrings.high_sleepiness,cx,labbottom,gWin,25)
+   top <- EasyLabel(gStrings.high_arousal,cx,labtop,gWin,25)
+   right  <- EasyLabel(gStrings.pleasant_feelings,cx+labside,cy,gWin,25)
+   left  <- EasyLabel(gStrings.unpleasant_feelings,cx-labside,cy,gWin,25)
    right.rotation <- 270
    left.rotation <- 270
 
-    bl  <- EasyLabel(gStrings.depression,gVideoWidth/2-(squaresize+border)*5,
-                                 gVideoHeight/2+(squaresize+border)*5,gWin,20)
-    br  <- EasyLabel(gStrings.relaxation,gVideoWidth/2+(squaresize+border)*5,
-                                     gVideoHeight/2+(squaresize+border)*5,gWin,20)
-    tl  <- EasyLabel(gStrings.stress,gVideoWidth/2-(squaresize+border)*5,
-                             gVideoHeight/2-(squaresize+border)*5,gWin,20)
-    tr  <- EasyLabel(gStrings.excitement,gVideoWidth/2+(squaresize+border)*5,
-                                     gVideoHeight/2-(squaresize+border)*5,gWin,20)
-    ok <- EasyLabel(gStrings.ok,gVideoWidth/2,gVideoHeight-150,gWin,40)
+    bl  <- EasyLabel(gStrings.depression,cx-labside,labbottom,gWin,20)
+    br  <- EasyLabel(gStrings.relaxation,cx+labside,labbottom,gWin,20)
+    tl  <- EasyLabel(gStrings.stress,cx-labside,labtop,gWin,20)
+    tr  <- EasyLabel(gStrings.excitement,cx+labside,labtop,gWin,20)
+    ok <- EasyLabel(gStrings.ok,cx,cy+half+labelgap+okspace/2,gWin,40)
    hit <-  Square(0,0, squaresize,hilight,1)
    AddObject(hit,gWin)
    Hide(hit)

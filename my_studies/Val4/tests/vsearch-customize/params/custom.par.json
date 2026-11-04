@@ -1,0 +1,6 @@
+{
+  "searchsizes": [50,60,70],
+  "numtargs": [0,1,5],
+  "boxwidth": 600,
+  "boxheight": 400
+}

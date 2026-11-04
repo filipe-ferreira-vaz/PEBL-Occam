@@ -94,6 +94,19 @@ define Start(p)
   gymin <- gLayout.centerY - fieldHeight/2
   gymax <- gLayout.centerY + fieldHeight/2
 
+  ## Keep every target inside the stimulus region so none can be drawn over the
+  ## header text (the field is taller than the region on small/DPI-scaled screens)
+  fieldTop <- gLayout.stimulusRegion.y + gParams.TargSize + 10
+  fieldBottom <- gLayout.stimulusRegion.y + gLayout.stimulusRegion.height - gParams.TargSize - 10
+  if(gymin < fieldTop)
+  {
+    gymin <- fieldTop
+  }
+  if(gymax > fieldBottom)
+  {
+    gymax <- fieldBottom
+  }
+
   gStimColor <- MakeColor("darkblue")
   gAccentColor <- MakeColor("yellow")
   gstimFont <-  MakeFont(gPEBLBaseFontMono,0,18,gAccentColor,gStimColor,1)

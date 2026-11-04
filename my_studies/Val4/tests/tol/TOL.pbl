@@ -79,9 +79,10 @@ if(gParams.testtype==-1)
    ##  type <- "3"
    ##  to go directly to a test configuration.
 
-  gInstructions.text  <-gSelect
-  Draw()
-  type <- WaitForListKeyPress(["1","2","3","4","5","6","7","8","9","0","A"])
+#  gInstructions.text  <-gSelect
+#  Draw()
+#  type <- WaitForListKeyPress(["1","2","3","4","5","6","7","8","9","0","A"])
+  type <- "3"   ## Always use Shallice test configuration 3
 
   }else{
    type <- gParams.testtype+""

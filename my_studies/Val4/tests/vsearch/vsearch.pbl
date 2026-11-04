@@ -328,6 +328,19 @@ define SearchTrial(targChar, foilChars,targcol,foilcol,numtargs,num)
    miny <- gHomey-gDisplayBoxSizeY/2
    maxy <- gHomey+gDisplayBoxSizeY/2
 
+   ##Keep the display inside the stimulus region so no target/foil can be drawn
+   ##over the header/trial counter (the box is taller than the region on small screens)
+   regTop <- gLayout.stimulusRegion.y + 30
+   regBottom <- gLayout.stimulusRegion.y + gLayout.stimulusRegion.height - 30
+   if(miny < regTop)
+   {
+     miny <- regTop
+   }
+   if(maxy > regBottom)
+   {
+     maxy <- regBottom
+   }
+
    ##create the xy points
    pts <- MakePoints(minx,maxx,miny,maxy,40,num)
 
