@@ -364,7 +364,9 @@ define SearchTrial(targChar, foilChars,targcol,foilcol,numtargs,num)
    label <- EasyLabel(gStrings.target, gLayout.centerX, gLayout.centerY-80, gWin, fontsize)
    gLayout.header.text <- PracticeString("CLICKTOSEARCH", "Click the mouse button to start searching")
    Draw()
-   WaitForDownClick()
+   ## Clicks made while the screen was black (building a large display can take
+   ## a few seconds) are queued and would skip this screen at once, so ignore them.
+   WaitForFreshDownClick()
    Hide(targ)
 
   ##Add all the targets/foils to the specified positions
@@ -439,6 +441,21 @@ define SearchTrial(targChar, foilChars,targcol,foilcol,numtargs,num)
   return [numtargs, num, display, resp, corr, (time2-time1),(time4-time3)]
 }
 
+
+## Waits for a mouse click made after the current screen appeared.
+## Clicks queued earlier (e.g. while PEBL was busy and the screen was black) are
+## returned by WaitForDownClick() immediately; any click arriving within
+## minDelay ms of the call is treated as one of those and discarded.
+define WaitForFreshDownClick(minDelay:200)
+{
+  shown <- GetTime()
+  resp <- WaitForDownClick()
+  while(GetTime() - shown < minDelay)
+  {
+    resp <- WaitForDownClick()
+  }
+  return(resp)
+}
 
 define ShowObjects(list)
 {
