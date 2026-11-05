@@ -4,6 +4,7 @@
 # Usage: double-click run-TNT-custom-stimulus-time.bat in the study folder, or
 #   run-TNT-custom-stimulus-time.bat -Participant PART_0042 -Fullscreen
 #   run-TNT-custom-stimulus-time.bat -Participant PART_0042 -Language pt
+#   run-TNT-custom-stimulus-time.bat -Participant PART_0042 -StimulusDuration 4000   (nothing asked)
 #
 # It asks for the participant code, then for
 #   StimulusDuration  presentation time of each stimulus in ms, e.g. 2500
@@ -18,7 +19,9 @@
 param(
   [string]$Participant,
   [string]$Language = 'en',
-  [switch]$Fullscreen
+  [int]$StimulusDuration = 0,
+  [switch]$Fullscreen,
+  [switch]$AnyParticipant   # accept any participant name (no task-orders.csv or format check)
 )
 
 $ErrorActionPreference = 'Stop'
@@ -63,6 +66,7 @@ if (Test-Path $ordersFile) {
 }
 while ($true) {
   if (-not $Participant) { $Participant = Read-Host 'Participant code' }
+  if ($AnyParticipant -and $Participant.Trim()) { $Participant = $Participant.Trim(); break }
   $Participant = $Participant.Trim().ToUpper()
   if ($Participant -match '^[A-Z0-9]+_\d+$' -and (-not $known -or $known.Contains($Participant))) { break }
   if ($known) { Write-Host "  '$Participant' is not in counterbalance\task-orders.csv." -ForegroundColor Yellow }
@@ -82,7 +86,7 @@ function Read-Int([string]$prompt, [int]$default, [int]$min) {
 }
 
 Write-Host ""
-$duration = Read-Int 'Stimulus duration in ms' $defaultDuration 1
+$duration = if ($StimulusDuration -ge 1) { $StimulusDuration } else { Read-Int 'Stimulus duration in ms' $defaultDuration 1 }
 
 $json = "{`r`n  `"StimulusDuration`": $duration`r`n}`r`n"
 [IO.File]::WriteAllText($parFile, $json, $utf8NoBom)

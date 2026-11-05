@@ -25,7 +25,8 @@ param(
   [string]$Language = 'en',
   [int]$Dimension = 0,
   [int]$Seed = 0,
-  [switch]$Fullscreen
+  [switch]$Fullscreen,
+  [switch]$AnyParticipant   # accept any participant name (no task-orders.csv or format check)
 )
 
 $ErrorActionPreference = 'Stop'
@@ -64,6 +65,7 @@ if (Test-Path $ordersFile) {
 }
 while ($true) {
   if (-not $Participant) { $Participant = Read-Host 'Participant code' }
+  if ($AnyParticipant -and $Participant.Trim()) { $Participant = $Participant.Trim(); break }
   $Participant = $Participant.Trim().ToUpper()
   if ($Participant -match '^[A-Z0-9]+_\d+$' -and (-not $known -or $known.Contains($Participant))) { break }
   if ($known) { Write-Host "  '$Participant' is not in counterbalance\task-orders.csv." -ForegroundColor Yellow }

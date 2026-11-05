@@ -4,6 +4,10 @@
 # Usage: double-click run-vsearch-customize.bat in the study folder, or
 #   run-vsearch-customize.bat -Participant PART_0042 -Fullscreen
 #   run-vsearch-customize.bat -Participant PART_0042 -Language pt
+#   run-vsearch-customize.bat -Participant PART_0042 -SearchSizes 40,50,60
+#
+# If any of -SearchSizes, -NumTargs, -BoxWidth, -BoxHeight is given, no values
+# are asked: the ones not given keep their defaults.
 #
 # It asks for the participant code, then for
 #   searchsizes  number of items in the search display, e.g. 10,20,30
@@ -21,7 +25,12 @@
 param(
   [string]$Participant,
   [string]$Language = 'en',
-  [switch]$Fullscreen
+  [int[]]$SearchSizes,
+  [int[]]$NumTargs,
+  [int]$BoxWidth = 0,
+  [int]$BoxHeight = 0,
+  [switch]$Fullscreen,
+  [switch]$AnyParticipant   # accept any participant name (no task-orders.csv or format check)
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,6 +65,7 @@ if (Test-Path $ordersFile) {
 }
 while ($true) {
   if (-not $Participant) { $Participant = Read-Host 'Participant code' }
+  if ($AnyParticipant -and $Participant.Trim()) { $Participant = $Participant.Trim(); break }
   $Participant = $Participant.Trim().ToUpper()
   if ($Participant -match '^[A-Z0-9]+_\d+$' -and (-not $known -or $known.Contains($Participant))) { break }
   if ($known) { Write-Host "  '$Participant' is not in counterbalance\task-orders.csv." -ForegroundColor Yellow }
@@ -91,17 +101,29 @@ function Read-Int([string]$prompt, [int]$default, [int]$min) {
 }
 
 Write-Host ""
-while ($true) {
-  $searchsizes = @(Read-IntList 'Search sizes, separated by commas' @(10, 20, 30) 1)
-  $numtargs    = @(Read-IntList 'Numbers of targets, separated by commas' @(0, 1, 5) 0)
-  # every size is crossed with every number of targets, so no display may have more targets than items
+$given = @('SearchSizes', 'NumTargs', 'BoxWidth', 'BoxHeight') | Where-Object { $PSBoundParameters.ContainsKey($_) }
+if ($given) {
+  # values from the command line, nothing asked; the ones not given keep their defaults
+  $searchsizes = if ($SearchSizes) { @($SearchSizes) } else { @(10, 20, 30) }
+  $numtargs    = if ($NumTargs) { @($NumTargs) } else { @(0, 1, 5) }
+  $boxwidth    = if ($BoxWidth -ge 1) { $BoxWidth } else { 600 }
+  $boxheight   = if ($BoxHeight -ge 1) { $BoxHeight } else { 400 }
   $smallest = ($searchsizes | Measure-Object -Minimum).Minimum
   $largest  = ($numtargs | Measure-Object -Maximum).Maximum
-  if ($largest -le $smallest) { break }
-  Write-Host "  $largest targets do not fit in a search size of $smallest. Enter the values again." -ForegroundColor Yellow
+  if ($smallest -lt 1 -or $largest -gt $smallest) { throw "Invalid values: $largest targets do not fit in a search size of $smallest." }
+} else {
+  while ($true) {
+    $searchsizes = @(Read-IntList 'Search sizes, separated by commas' @(10, 20, 30) 1)
+    $numtargs    = @(Read-IntList 'Numbers of targets, separated by commas' @(0, 1, 5) 0)
+    # every size is crossed with every number of targets, so no display may have more targets than items
+    $smallest = ($searchsizes | Measure-Object -Minimum).Minimum
+    $largest  = ($numtargs | Measure-Object -Maximum).Maximum
+    if ($largest -le $smallest) { break }
+    Write-Host "  $largest targets do not fit in a search size of $smallest. Enter the values again." -ForegroundColor Yellow
+  }
+  $boxwidth  = Read-Int 'Search box width in pixels' 600 1
+  $boxheight = Read-Int 'Search box height in pixels' 400 1
 }
-$boxwidth  = Read-Int 'Search box width in pixels' 600 1
-$boxheight = Read-Int 'Search box height in pixels' 400 1
 
 $json = "{`r`n  `"searchsizes`": [$($searchsizes -join ',')],`r`n  `"numtargs`": [$($numtargs -join ',')],`r`n  `"boxwidth`": $boxwidth,`r`n  `"boxheight`": $boxheight`r`n}`r`n"
 [IO.File]::WriteAllText($parFile, $json, $utf8NoBom)
