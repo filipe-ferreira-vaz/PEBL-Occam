@@ -1,0 +1,38 @@
+{
+  "test": "maze-custom-dimension",
+  "version": "1.0",
+  "description": "Maze solving task: one new square maze, dimension chosen in the terminal",
+  "parameters": [
+
+    {
+      "name": "mazeDimension",
+      "type": "integer",
+      "default": 15,
+      "description": "Number of cells along each side of the square maze (N gives an N x N maze; set by run-maze-custom-dimension.bat). Large mazes take a while to generate."
+    },
+    {
+      "name": "seed",
+      "type": "integer",
+      "default": 0,
+      "description": "Random seed the maze is generated from. The same dimension and seed always give the same maze. 0 = draw a new random seed (it is recorded in the data)."
+    },
+    {
+       "name": "savemazes",
+       "type": "integer",
+        "default": 1,
+       "description": "whether a copy of the maze should be saved to the data directory (JSON file)"
+    },
+      {
+	  "name": "showpreview",
+	  "type": "integer",
+	  "default": 0,
+	  "description": "Time, in ms, to show the preview of the correct solution.  using this might be an appropriate no-planning control condition, or a short memory test. When set to 0, subject gets planning time instead."
+      },
+      {
+	  "name": "allowplanning",
+	  "type": "integer",
+	  "default": 1,
+	  "description": "Whether planning time should be allowed. This is overriden by showpreview, where the execution starts immediately."
+      }
+  ]
+}

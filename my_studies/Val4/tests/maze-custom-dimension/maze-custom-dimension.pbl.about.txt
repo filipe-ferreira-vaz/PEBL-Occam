@@ -1,0 +1,23 @@
+Maze-Solving Task (one maze, custom dimension)
+
+Start it with run-maze-custom-dimension.bat in the study folder: it asks in
+the terminal for the maze dimension N (the maze is N x N cells) and,
+optionally, a seed (Enter = new random seed). It writes them to
+params/dimension.par.json and runs the test: the practice maze, then ONE
+newly generated N x N maze.
+
+Reproducibility: the maze is generated from the seed, so the same dimension
+and seed always give the same maze. To present a maze again, type the same
+dimension and seed (both are printed in the terminal, recorded in the csv
+and in the maze file name), e.g.
+  run-maze-custom-dimension.bat -Dimension 20 -Seed 481516
+
+The Maze-Solving Task assesses spatial reasoning, planning, and navigation abilities using randomly generated mazes created with the Kruskal algorithm. Participants navigate from a marked start position (S) to an end position (E) using arrow keys to move through the maze corridors. The task allows optional planning time before the first move and tracks both planning time and solution time. Performance is measured by comparing the participant's path length and number of moves to the optimal (shortest) solution path.
+
+Data Output (in data/SUBNUM/):
+- maze-custom-dimension-SUBNUM.csv: one row per maze (practice rows have seed PRACTICE):
+  seed, width, height, maze file, shortest path, moves, path length, times
+- maze-custom-dimension-log-SUBNUM.csv: every move
+- report-SUBNUM.txt: readable summary per maze
+- maze-custom-dimension-SUBNUM-YYYYMMDD-HHMMSS-NxN-seedSEED.json: the maze presented
+  (walls, start, end, best solution, seed) in the run started at that date and time
