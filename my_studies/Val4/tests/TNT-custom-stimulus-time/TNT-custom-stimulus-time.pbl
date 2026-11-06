@@ -795,6 +795,7 @@ define TNT() {
 
         if (str == "Zer") {
 
+            gLayout.header.text <- gstrings.headerzero
             message <- EasyLabel("0-Back trial will begin in", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
             restTime <- 5
             while (restTime >= 1) {
@@ -827,7 +828,6 @@ define TNT() {
             respType <- 0
             corr <- 0
           Print("header here")
-            gLayout.header.text <- gstrings.headerzero
 	    Draw()
 
             while (i <= gParams.numStimsAct) {
@@ -930,6 +930,7 @@ define TNT() {
         }
         if (str == "One") {
 
+            gLayout.header.text <- gstrings.headerone
             message <- EasyLabel("1-Back trial will begin in", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
             restTime <- 5
             Print(restTime)
@@ -961,7 +962,6 @@ define TNT() {
             rT <- 0
             respType <- 0
             corr <- 0
-            gLayout.header.text <- gstrings.headerone
 	    Draw()
 
             while (i <= gParams.numStimsAct) {
@@ -1065,6 +1065,7 @@ define TNT() {
         }
         if (str == "Two") {
 
+            gLayout.header.text <- gstrings.headertwo
             message <- EasyLabel("2-Back trial will begin in", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
             restTime <- 5
             Print(restTime)
@@ -1096,7 +1097,6 @@ define TNT() {
             rT <- 0
             respType <- 0
             corr <- 0
-            gLayout.header.text <- gstrings.headertwo
 	    Draw()
 
             while (i <= gParams.numStimsAct) {
