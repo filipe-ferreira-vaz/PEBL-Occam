@@ -1,0 +1,32 @@
+{
+  "test": "maze-increasing-difficulty-v1-portuguese",
+  "version": "1.0",
+  "description": "Maze solving task: practice maze, then 8 stored mazes from the shortest to the longest shortest path",
+  "parameters": [
+
+    {
+      "name": "mazes",
+      "type": "list",
+      "default": ["1-maze15x15-id4.json", "2-maze15x15-id2.json", "3-maze15x15-id16.json", "4-maze15x15-id21.json", "5-maze15x15-id9.json", "6-maze20x20-seed83.json", "7-maze20x20-seed117.json", "8-maze20x20-seed165.json"],
+      "description": "The maze files (in mazes/) to present, in this order. Default: 5 standard 15x15 mazes and 3 20x20 mazes, from the shortest shortest path (29) to the longest (81)."
+    },
+    {
+       "name": "savemazes",
+       "type": "integer",
+        "default": 1,
+       "description": "whether the mazes presented should be saved to the data directory (all of them in one JSON file)"
+    },
+      {
+	  "name": "showpreview",
+	  "type": "integer",
+	  "default": 0,
+	  "description": "Time, in ms, to show the preview of the correct solution.  using this might be an appropriate no-planning control condition, or a short memory test. When set to 0, subject gets planning time instead."
+      },
+      {
+	  "name": "allowplanning",
+	  "type": "integer",
+	  "default": 1,
+	  "description": "Whether planning time should be allowed. This is overriden by showpreview, where the execution starts immediately."
+      }
+  ]
+}

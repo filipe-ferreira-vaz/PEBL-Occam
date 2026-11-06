@@ -1,0 +1,12 @@
+{
+  "inst1": "Nesta tarefa, vai resolver uma série de labirintos, como o apresentado abaixo. Cada labirinto terá duas fases: uma FASE DE PLANEAMENTO, na qual deve observar o labirinto e planear a sua resolução, e uma FASE DE RESOLUÇÃO, na qual deve usar as teclas de setas do teclado para fazer um caminho do início (S) ao fim (E). Pressione a barra de espaços para continuar.",
+  "inst2": "No labirinto, há apenas um caminho do início ao fim. Durante a FASE DE PLANEAMENTO, não toque no teclado e tente planear como resolver o labirinto. O seu objetivo é resolvê-lo pelo caminho mais curto possível; para isso deve ter uma ideia bastante clara da rota antes de começar a resolver. Depois de ter um plano, pressione a barra de espaços e use as teclas de setas para executar o plano na FASE DE RESOLUÇÃO. Pressione a barra de espaços para continuar.",
+  "inst3": "Lembre-se: 1. Pode demorar o tempo que quiser a planear. 2. Depois de começar a resolver, tente percorrer o caminho mais curto possível, sem voltar atrás ou cometer erros. 3. Tente resolver o mais rapidamente possível, desde que não cometa erros. Vamos começar com um treino: planeie como resolver este labirinto e depois pressione a barra de espaço para começar.",
+  "preview": "Pressione qualquer tecla para aceder a uma pré-visualização do labirinto",
+  "prompt": "FASE DE PLANEAMENTO: Pressione a barra de espaços quando terminar de fazer o seu plano. Em seguida, resolva o labirinto usando as teclas de setas.",
+  "solving": "FASE DE RESOLUÇÃO: mova-se de S para E usando as teclas de setas do teclado",
+  "debrief": "Esta parte da tarefa está completa. Pressione qualquer tecla para continuar.",
+  "PRACTICEDONE": "Terminou o treino. Pode repetir o labirinto de treino as vezes que quiser, ou começar a tarefa. Na tarefa, as suas soluções serão registadas e contabilizadas: planeie primeiro cada labirinto e depois resolva-o pelo caminho mais curto que conseguir, o mais rapidamente possível e sem erros.",
+  "PRACTICEREPEAT": "Repetir o treino",
+  "PRACTICESTART": "Começar a tarefa"
+}

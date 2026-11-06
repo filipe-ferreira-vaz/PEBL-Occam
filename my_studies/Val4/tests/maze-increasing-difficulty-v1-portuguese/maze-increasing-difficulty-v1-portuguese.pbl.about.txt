@@ -1,0 +1,27 @@
+Maze-Solving Task (increasing difficulty, v1)
+
+Start it with run-maze-increasing-difficulty-v1.bat in the study folder: it asks
+for the participant code, prints the 8 mazes with their shortest paths, waits for
+Enter and runs the test.
+
+The participant does the 5x5 practice maze (as often as they like), then the 8
+mazes in mazes/, always in this order (shortest path = cells from start to end,
+both included):
+
+  Order  File                       Size   Source                 Shortest path
+      1  1-maze15x15-id4.json       15x15  standard25 maze 4                 29
+      2  2-maze15x15-id2.json       15x15  standard25 maze 2                 35
+      3  3-maze15x15-id16.json      15x15  standard25 maze 16                43
+      4  4-maze15x15-id21.json      15x15  standard25 maze 21                51
+      5  5-maze15x15-id9.json       15x15  standard25 maze 9                 57
+      6  6-maze20x20-seed83.json    20x20  maze-custom-dimension, seed 83    65
+      7  7-maze20x20-seed117.json   20x20  maze-custom-dimension, seed 117   73
+      8  8-maze20x20-seed165.json   20x20  maze-custom-dimension, seed 165   81
+
+Data Output (in data/SUBNUM/):
+- maze-increasing-difficulty-v1-SUBNUM.csv: one row per maze, practice included
+  (order 0 = practice; order, maze, width, height, shortest path, moves, path length, times)
+- maze-increasing-difficulty-v1-log-SUBNUM.csv: every move
+- report-SUBNUM.txt: readable summary per maze
+- maze-increasing-difficulty-v1-SUBNUM-YYYYMMDD-HHMMSS-mazes.json: ONE file with all the
+  mazes presented in the run started at that date and time (a JSON list, in order)

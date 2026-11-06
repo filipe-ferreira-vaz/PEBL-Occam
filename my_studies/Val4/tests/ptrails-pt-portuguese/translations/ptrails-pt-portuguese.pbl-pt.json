@@ -1,0 +1,14 @@
+{
+  "INST": "Nesta tarefa, o seu objetivo é clicar em cada círculo, em sequência, o mais rapidamente que puder. Quando clicar no círculo correto, o número mudará para negrito e uma linha será desenhada do círculo anterior para o círculo seguinte. Em algumas tentativas, os círculos serão numerados de 1 a 23, e deve clicar neles seguindo a ordem numérica (1-2-3-4, e assim por diante). Em outras tentativas, os círculos terão tanto números (1 a 12) quanto letras (A até M), e deve clicar neles de forma alternada (1-A-2-B-3-C e assim por diante). Se clicar no círculo errado, nenhuma linha será desenhada. A tentativa continuará até que tenha clicado com sucesso em todos os círculos na ordem correta.\n\nDepois de os círculos aparecerem, pode examinar o ecrã pelo tempo que desejar. O tempo não começa até que clique no primeiro círculo, '1' em cada tentativa.",
+  "BEGIN": "Clique no botão do rato para começar.",
+  "PRACTICE": "Clique para começar o treino.",
+  "FINISH": "Esta tarefa está terminada. Clique no ecrã para continuar.",
+  "TYPE1": "Clique em cada número consecutivamente. (1-2-3-4)",
+  "TYPE2": "Clique alternadamente em cada número e letra. (1-A-2-B).",
+  "TYPE3": "Clique em cada letra por ordem alfabética. (A-B-C-D)",
+  "PRACTICEINTRO": "Antes da tarefa, vai fazer um breve treino com um exemplo de cada tipo de sequência.",
+  "PRACTICEHEADER": "Treino: ",
+  "PRACTICEDONE": "Terminou o treino. Pode repetir o treino as vezes que quiser, ou começar a tarefa. Na tarefa, as suas respostas serão registadas e o seu desempenho será contabilizado, por isso tente responder o mais rapidamente e corretamente possível.",
+  "PRACTICEREPEAT": "Repetir o treino",
+  "PRACTICESTART": "Começar a tarefa"
+}

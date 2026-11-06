@@ -113,6 +113,36 @@
       "included": true,
       "test_name": "vsearch-customize",
       "test_path": "vsearch-customize"
+    },
+    {
+      "display_name": "maze-increasing-difficulty-v1-portuguese",
+      "included": true,
+      "test_name": "maze-increasing-difficulty-v1-portuguese",
+      "test_path": "maze-increasing-difficulty-v1-portuguese"
+    },
+    {
+      "display_name": "ptrails-pt-portuguese",
+      "included": true,
+      "test_name": "ptrails-pt-portuguese",
+      "test_path": "ptrails-pt-portuguese"
+    },
+    {
+      "display_name": "tol-portuguese/TOL-portuguese",
+      "included": true,
+      "test_name": "tol-portuguese/TOL-portuguese",
+      "test_path": "tol-portuguese"
+    },
+    {
+      "display_name": "TNT-custom-stimulus-time-portuguese",
+      "included": true,
+      "test_name": "TNT-custom-stimulus-time-portuguese",
+      "test_path": "TNT-custom-stimulus-time-portuguese"
+    },
+    {
+      "display_name": "vsearch-customize-portuguese",
+      "included": true,
+      "test_name": "vsearch-customize-portuguese",
+      "test_path": "vsearch-customize-portuguese"
     }
   ],
   "upload_server_url": "",

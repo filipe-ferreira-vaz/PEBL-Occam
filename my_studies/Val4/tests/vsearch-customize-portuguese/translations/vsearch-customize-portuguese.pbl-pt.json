@@ -1,0 +1,16 @@
+{
+  "INST1": "Nesta tarefa irá ver no ecrã muitas letras e deve procurar um alvo específico. No início de cada tentativa, o alvo será apresentado; clique com o rato quando estiver pronto para o procurar. Em seguida, será mostrado um ecrã com várias letras no qual deve procurar o alvo. Em algumas tentativas, o alvo estará presente; noutras estará ausente. Quando encontrar o alvo ou determinar que este está ausente, clique com o rato. Após o clique, todas as letras serão substituídas por círculos. Quando isso acontecer, clique na localização do alvo ou no botão '<NONE>'.",
+  "INST2": "Vamos começar com um treino.",
+  "INST3": "Agora, as tentativas serão registadas e o seu desempenho será contabilizado. Tente responder o mais rapidamente possível.",
+  "TRIAL": "Tentativa [<I>] de [<N>]",
+  "NONE": "AUSENTE",
+  "TARGET": "Alvo:",
+  "COMPLETE": "Clique com o rato quando terminar a procura.",
+  "SELECT": "Clique no círculo na localização do alvo ou em AUSENTE",
+  "BREAK": "Pode fazer uma pausa curta.",
+  "DEBRIEF": "Terminou a tarefa. Pressione OK para continuar.",
+  "PRACTICEDONE": "Terminou o treino. Pode repetir o treino as vezes que quiser, ou começar a tarefa. Na tarefa, as suas respostas serão registadas e o seu desempenho será contabilizado, por isso tente responder o mais rapidamente e corretamente possível.",
+  "PRACTICEREPEAT": "Repetir o treino",
+  "PRACTICESTART": "Começar a tarefa",
+  "CLICKTOSEARCH": "Clique com o rato para começar a procurar"
+}
