@@ -37,7 +37,7 @@ define Start(p)
 		      ["pointtolerance",2],  # #minimum number of pixels of separation between targets
                                              ## (soft constraint that will be violated if proper
                                              ## configuration cannot be found)
-		      ["NumTargs", 23 ],     #Number of targets (ptrails-pt: 1-23, no K, W, Y)
+		      ["NumTargs", 23 ],     #Number of targets (ptrails-pt: 1-23, no K, W, Y; alternating trail: 24 = 1-12 + A-M)
 		      ["DrawLines", 1 ],     #Whether to draw lines
 		      ["fieldwidth",700],
 		      ["fieldheight",500],
@@ -47,6 +47,12 @@ define Start(p)
    gParams <- CreateParameters(parpairs,gParamFile)
 #   gParams.useReitan <- 1
    gParams.pathscalethresh <- 2 ##This isn't really used.
+
+   ##ptrails-pt: the alternating (numbers + letters) trail needs as many letters
+   ##as numbers. With NumTargs = 23 it would end at 12 / L, so it gets one extra
+   ##target (24: 1-12 and A-M). Paths are built with gMixedTargs points; the
+   ##numbers-only and letters-only trails drop the path's last point.
+   gMixedTargs <- gParams.NumTargs + Mod(gParams.NumTargs, 2)
 
 #  SeedRng(304)
 
@@ -152,7 +158,7 @@ define Start(p)
       ## Draw()
 
       ##create the points first
-      pts <- NonOverlapLayout(gxmin, gxmax, gymin, gymax, gtol, gParams.NumTargs)
+      pts <- NonOverlapLayout(gxmin, gxmax, gymin, gymax, gtol, gMixedTargs)
 
       ##Instead of a random path, use the 'shortest' path?:
       if(gParams.useShortPath)
@@ -167,7 +173,7 @@ define Start(p)
 	 loop(i,Sequence(1,gParams.shorteningtries,1))
 	 {
 	   ##always pick 1-2 as start-end (these are arbitrary anyway)
-	    seq <- Merge([1,2],Shuffle(Sequence(3,gParams.numtargs,1)))
+	    seq <- Merge([1,2],Shuffle(Sequence(3,gMixedTargs,1)))
 	    tour <- GrowPathInsert(seq,pts,mat)
 
 
@@ -223,11 +229,13 @@ define Start(p)
      {
         ##We need three versions; shuffle randomly so there is no systematic bias.
           ptset <- Shuffle([pts,Flip(pts),FlipVert(pts)])
-          ptA <- Append(ptA,First(ptset))
-          ptB <- Append(ptB,Second(ptset))
+          ##ptA = numbers, ptB = letters (NumTargs points); ptC = alternating (gMixedTargs)
+          ptA <- Append(ptA,SubList(First(ptset),1,gParams.NumTargs))
+          ptB <- Append(ptB,SubList(Second(ptset),1,gParams.NumTargs))
           ptC <- Append(ptC,Third(ptset))
       }else{
-         ptA <- Append(ptA,pts)
+         ##ptA = numbers (NumTargs points); ptB = alternating (gMixedTargs)
+         ptA <- Append(ptA,SubList(pts,1,gParams.NumTargs))
          ptB <- Append(ptB,Flip(pts))  #Points should be reflected here.
 
       }
@@ -1005,58 +1013,58 @@ define GetStrings(lang)
 
 }
 
-## Practice choice screen: shows text and two boxes to click with the mouse,
-## one to repeat the practice and one to start the real test.
-## Returns 1 (repeat the practice) or 0 (start the real test).
-define PracticeChoice(text, win, fontsize:30)
-{
-  repeatText <- PracticeString("PRACTICEREPEAT", "Repeat the practice")
-  startText  <- PracticeString("PRACTICESTART", "Start the real test")
-
-  bgcol <- win.BGCOLOR
-  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
-  {
-    fgcol <- MakeColor("white")
-  } else {
-    fgcol <- MakeColor("black")
-  }
-
-  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
-  Move(bg, gVideoWidth/2, gVideoHeight/2)
-  AddObject(bg, win)
-  box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
-
-  y <- gVideoHeight - 110
-  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
-  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
-  w <- Max([repeatLab.width, startLab.width]) + 60
-  Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
-  Move(startLab, gVideoWidth/2 + w/2 + 30, y)
-  repeatBox <- Rectangle(gVideoWidth/2 - w/2 - 30, y, w, 70, fgcol, 0)
-  startBox  <- Rectangle(gVideoWidth/2 + w/2 + 30, y, w, 70, fgcol, 0)
-  AddObject(repeatBox, win)
-  AddObject(startBox, win)
-
-  Draw()
-  ShowCursor(1)
-  choice <- WaitForClickOnTarget([repeatBox, startBox], [1, 0])
-  LSLMarker("practice_choice_" + choice)
-
-  RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
-  Draw()
-  return choice
-}
-
-## Text from the translation file, or the English default if the current
-## language file does not have it.
-define PracticeString(key, fallback)
-{
-  out <- fallback
-  if(PropertyExists(gStrings, key))
-  {
-    out <- GetProperty(gStrings, key)
-  }
-  return out
+## Practice choice screen: shows text and two boxes to click with the mouse,
+## one to repeat the practice and one to start the real test.
+## Returns 1 (repeat the practice) or 0 (start the real test).
+define PracticeChoice(text, win, fontsize:30)
+{
+  repeatText <- PracticeString("PRACTICEREPEAT", "Repeat the practice")
+  startText  <- PracticeString("PRACTICESTART", "Start the real test")
+
+  bgcol <- win.BGCOLOR
+  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
+  {
+    fgcol <- MakeColor("white")
+  } else {
+    fgcol <- MakeColor("black")
+  }
+
+  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
+  Move(bg, gVideoWidth/2, gVideoHeight/2)
+  AddObject(bg, win)
+  box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
+
+  y <- gVideoHeight - 110
+  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
+  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
+  w <- Max([repeatLab.width, startLab.width]) + 60
+  Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
+  Move(startLab, gVideoWidth/2 + w/2 + 30, y)
+  repeatBox <- Rectangle(gVideoWidth/2 - w/2 - 30, y, w, 70, fgcol, 0)
+  startBox  <- Rectangle(gVideoWidth/2 + w/2 + 30, y, w, 70, fgcol, 0)
+  AddObject(repeatBox, win)
+  AddObject(startBox, win)
+
+  Draw()
+  ShowCursor(1)
+  choice <- WaitForClickOnTarget([repeatBox, startBox], [1, 0])
+  LSLMarker("practice_choice_" + choice)
+
+  RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
+  Draw()
+  return choice
+}
+
+## Text from the translation file, or the English default if the current
+## language file does not have it.
+define PracticeString(key, fallback)
+{
+  out <- fallback
+  if(PropertyExists(gStrings, key))
+  {
+    out <- GetProperty(gStrings, key)
+  }
+  return out
 }
 
 
@@ -1106,7 +1114,7 @@ define CreateHTMLReport(dat)
     H("Test Configuration",3) +
     P(B("Screen resolution: ") + gVideoWidth + " × " + gVideoHeight + " pixels") +
     P(B("Field size: ") + gParams.fieldwidth + " × " + gParams.fieldheight + " pixels") +
-    P(B("Number of targets: ") + gParams.NumTargs) +
+    P(B("Number of targets: ") + gParams.NumTargs + " (alternating trail: " + gMixedTargs + ")") +
     P(B("Trials per condition: ") + gParams.numtrials) +
     P(B("Use letters: ") + gParams.useLetters) +
     P(B("Practice trials: ") + gParams.doPractice) +
