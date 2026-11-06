@@ -37,6 +37,12 @@
       "test_path": "maze-custom-dimension"
     },
     {
+      "display_name": "maze-increasing-difficulty-v1",
+      "included": true,
+      "test_name": "maze-increasing-difficulty-v1",
+      "test_path": "maze-increasing-difficulty-v1"
+    },
+    {
       "display_name": "ptrails",
       "included": true,
       "test_name": "ptrails",
