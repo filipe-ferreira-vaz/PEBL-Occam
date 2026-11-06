@@ -6,7 +6,7 @@
 #   run-portuguese-study.bat -Participant 42 -Session B -Fullscreen
 #
 # It asks for
-#   participant ID  a whole number from 1 to 100; the data of every test go to
+#   participant ID  a whole number from 1 to 300; the data of every test go to
 #                   tests/<test>/data/<ID>/
 #   session         A or B
 # and runs
@@ -17,7 +17,7 @@
 #              tol-portuguese/TOL-portuguese
 #
 # Counterbalancing: each participant's fixed test order is read from
-# counterbalance/portuguese-study-orders.csv (one row per ID 1-100, columns
+# counterbalance/portuguese-study-orders.csv (one row per ID 1-300, columns
 # participant, session_A_order, session_B_order; test names separated by spaces:
 # vsearch, tnt, maze, ptrails, tol). Edit that file to change an order.
 # As generated, session A cycles through the 6 possible orders (ID 1 = order 1,
@@ -56,13 +56,13 @@ if ($workspaceDir) {
 if (-not (Test-Path $pebl)) { throw "pebl2.exe not found at $pebl" }
 $log = if ($workspaceDir) { Join-Path $workspaceDir 'logs\launcher-log.csv' } else { $null }
 
-# Participant ID: whole number from 1 to 100
+# Participant ID: whole number from 1 to 300
 $id = 0
 while ($true) {
-  if (-not $Participant) { $Participant = Read-Host 'Participant ID (1-100)' }
+  if (-not $Participant) { $Participant = Read-Host 'Participant ID (1-300)' }
   $n = 0
-  if ([int]::TryParse($Participant.Trim(), [ref]$n) -and $n -ge 1 -and $n -le 100) { $id = $n; break }
-  Write-Host "  Type a whole number from 1 to 100." -ForegroundColor Yellow
+  if ([int]::TryParse($Participant.Trim(), [ref]$n) -and $n -ge 1 -and $n -le 300) { $id = $n; break }
+  Write-Host "  Type a whole number from 1 to 300." -ForegroundColor Yellow
   $Participant = $null
 }
 $Participant = "$id"

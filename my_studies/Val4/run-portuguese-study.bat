@@ -1,5 +1,5 @@
 @echo off
-rem Portuguese study: asks for the participant ID (1-100) and the session (A or B), then runs
+rem Portuguese study: asks for the participant ID (1-300) and the session (A or B), then runs
 rem the European Portuguese tests in a counterbalanced order (set by the participant ID):
 rem   Session A: vsearch-customize-portuguese (search sizes 40,50,60), TNT-custom-stimulus-time-portuguese (4000 ms),
 rem              maze-increasing-difficulty-v1-portuguese
