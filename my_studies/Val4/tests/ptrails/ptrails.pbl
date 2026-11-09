@@ -1185,7 +1185,8 @@ define CreateHTMLReport(dat)
 ##        Shortcut: 1000 Hz, 50 ms, amplitude 0.8, non-blocking.
 ##   BeepsStart() / BeepsEnd()
 ##        Standard 1000 Hz / 50 ms start and end beeps (see above). The end
-##        beep is blocking, so it finishes before the test closes.
+##        beep is blocking and followed by a 250 ms wait, so it finishes
+##        playing before the test closes.
 ##   GetToneLog()
 ##        List of [label, freq, durationMs, amplitude, timestamp, clocktime]
 ##        for every tone played so far.
@@ -1337,9 +1338,14 @@ define BeepsStart()
 
 ## Standard end beep (inserted automatically by setup-study.bat).
 ## Blocking, then saves every beep of this run to data/<subject>/beeps-<subject>.csv
+## The blocking play only waits until PEBL has handed the tone to the sound
+## card (~50 ms); the end of the tone is still queued in Windows' audio buffer.
+## Tests that close right after BeepsEnd() (e.g. affectgrid, TNT) would cut
+## the tone off, so wait 250 ms for the buffer to drain before returning.
 define BeepsEnd()
 {
   t <- PlayTone(1000, 50, 0.8, 1, "beep_end")
+  Wait(250)
   BeepsWriteLog()
   return(t)
 }
