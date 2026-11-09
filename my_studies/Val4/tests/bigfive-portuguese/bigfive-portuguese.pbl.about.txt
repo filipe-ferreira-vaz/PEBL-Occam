@@ -1,0 +1,12 @@
+PEBL implementation of the 44-item Big Five Inventory (BFI-44), European
+Portuguese version ("Como sou eu?"), with subscales for extraversion,
+agreeableness, conscientiousness, neuroticism and openness.
+The test always runs in Portuguese (translations/bigfive-portuguese.pbl-pt.json).
+
+See:  John, O. P., Donahue, E. M., & Kentle, R. L. (1991). The Big Five
+      Inventory--Versions 4a and 54. Berkeley, CA: University of California,
+      Berkeley, Institute of Personality and Social Research.
+      Simoes, V. J. (2016). Adaptacao e Validacao do Teste de Personalidade
+      Mini-IPIP e Big Five Inventory (BFI) a adultos portugueses.
+
+Parameters allow you to randomize the order in which questions appear, and to select which of five subscales you wish to administer.

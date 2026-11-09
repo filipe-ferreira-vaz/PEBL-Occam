@@ -19,6 +19,12 @@
       "test_path": "bigfive"
     },
     {
+      "display_name": "bigfive-portuguese",
+      "included": true,
+      "test_name": "bigfive-portuguese",
+      "test_path": "bigfive-portuguese"
+    },
+    {
       "display_name": "maze",
       "included": true,
       "test_name": "maze",

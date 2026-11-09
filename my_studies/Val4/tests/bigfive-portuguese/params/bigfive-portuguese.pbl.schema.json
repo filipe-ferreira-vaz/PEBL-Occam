@@ -1,0 +1,68 @@
+{
+  "test": "bigfive-portuguese",
+  "version": "1.0",
+  "description": "BIGFIVE Test (BFI-44, European Portuguese)",
+  "parameters": [
+    {
+      "name": "shufflequestions",
+      "type": "boolean",
+      "default": 0,
+      "description": "Should the 44 questions be shuffled?",
+      "options": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "doExt",
+      "type": "boolean",
+      "default": 1,
+      "description": "Whether extroversion questions should be used?",
+      "options": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "doAgr",
+      "type": "boolean",
+      "default": 1,
+      "description": "Whether agreeableness questions should be used?",
+      "options": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "doCon",
+      "type": "boolean",
+      "default": 1,
+      "description": "Whether conscientiousness questions should be used?",
+      "options": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "doEmo",
+      "type": "boolean",
+      "default": 1,
+      "description": "Whether neuroticism questions should be used?",
+      "options": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "doInt",
+      "type": "boolean",
+      "default": 1,
+      "description": "whether intellectualism/intelligence should be used?",
+      "options": [
+        0,
+        1
+      ]
+    }
+   
+  ]
+}
