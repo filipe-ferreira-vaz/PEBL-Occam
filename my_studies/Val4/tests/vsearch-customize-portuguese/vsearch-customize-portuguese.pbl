@@ -84,7 +84,7 @@ define Start(p)
     "sub,trial,time,numtargs,size,targchar,targcol,stim,resp,corr,rt1,rt2")
 
     ##increase text size:
-    MessageBox(ReplaceChar(gStrings.inst1,"<NONE>",gStrings.none),gWin,40)
+    FitMessageBox(ReplaceChar(gStrings.inst1,"<NONE>",gStrings.none),gWin,40)
 
 
    ##These aggregate the conditions into a single design list.
@@ -98,7 +98,7 @@ define Start(p)
    ##canned practice trials (not recorded). After them the participant can
    ##repeat the practice as often as needed, or start the real test.
 
-   MessageBox(gStrings.inst2,gWin,40)
+   FitMessageBox(gStrings.inst2,gWin,40)
    repeatPractice <- 1
    while(repeatPractice)
    {
@@ -162,7 +162,7 @@ define Start(p)
 
     if(Mod(trial,40)==0)
      {
-        MessageBox(gstrings.break,gWin,40)
+        FitMessageBox(gstrings.break,gWin,40)
 	Draw()
 	Wait(1000)
 	Draw()
@@ -264,7 +264,7 @@ loop(target,targlevs) ##target
   UploadFile(gSubNum, datafile)
   UploadFile(gSubNum, summaryfile)
 
-  MessageBox(gStrings.debrief,gWin,40)
+  FitMessageBox(gStrings.debrief,gWin,40)
 }
 
 
@@ -585,6 +585,32 @@ define GetStrings(lang)
   gStrings <- GetTranslations("vsearch-customize-portuguese", "pt")  ## always European Portuguese
 }
 
+
+## MessageBox (from PEBL's Utility.pbl) whose text shrinks to fit the box.
+## The standard MessageBox uses a fixed font size, so on small windows (small
+## screen or Windows "Scale" above 100%) long instructions are cut off.
+define FitMessageBox(text, win, fontsize:20)
+{
+  bgcol <- win.BGCOLOR
+  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
+  {
+    fgcol <- MakeColor("white")
+  } else {
+    fgcol <- MakeColor("black")
+  }
+  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
+  Move(bg, gVideoWidth/2, gVideoHeight/2)
+  AddObject(bg, win)
+  box <- AdaptiveTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-200, "scalefont")
+  ok <- EasyLabel("OK", gVideoWidth/2, gVideoHeight-100, win, 44)
+  back <- Rectangle(gVideoWidth/2, gVideoHeight-100, ok.width+20, 40, fgcol, 0)
+  AddObject(back, win)
+  Draw()
+  ShowCursor(1)
+  WaitForClickOnTarget([back], [1])
+  RemoveObjects([bg, box, ok, back], win)
+  Draw()
+}
 
 ## Practice choice screen: shows text and two boxes to click with the mouse,
 ## one to repeat the practice and one to start the real test.

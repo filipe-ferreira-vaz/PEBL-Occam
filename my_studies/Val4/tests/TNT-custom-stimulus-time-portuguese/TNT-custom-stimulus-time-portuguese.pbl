@@ -87,6 +87,7 @@ define Start(p) {
 
     ## Create layout - response labels come from response-modes.json
     gLayout <- CreateLayout("TNT", gWin, gParams)
+    gHeaderSize <- gLayout.header.font.size  ## FitHeader() starts from this size
     gLayout.subheader.visible <- 1  ## For trial counter
     gLayout.footer.visible <- 1  ## Make footer visible
 
@@ -232,11 +233,24 @@ define TNT() {
 
         if (first_run == 1) {
 
-            inst <- AdaptiveTextBox(gStrings.inst1+CR(1)+gstrings.reminder+CR(1)+gStrings.ready1+CR(1)+gSTrings.ready2, gLayout.centerX - 350, 50, gWin, 24, 700, 600, "scalefont")
+            ## The response labels (NÃO / SIM) and the footer are white and sit
+            ## behind this white box, so their text is put inside the box (black)
+            ## and the originals are hidden while the box is shown.
+            keyText <- ""
+            loop(lab, gLayout.responseLabels)
+            {
+                keyText <- keyText + CR(1) + lab.text
+            }
+            ## Box size follows the window (smaller screens / Windows scaling)
+            instW <- Min([700, gVideoWidth - 80])
+            instH <- Min([600, gVideoHeight - 60])
+            inst <- AdaptiveTextBox(gStrings.inst1+CR(1)+gstrings.reminder+CR(2)+gLayout.footer.text+":"+keyText+CR(2)+gStrings.ready1+CR(1)+gSTrings.ready2, gLayout.centerX - instW/2, 30, gWin, 24, instW, instH, "scalefont")
+            SetBottomVisible(0)
             Show(inst)
             Draw()
             WaitForLayoutResponse(gLayout, 300000)
             Hide(inst)
+            SetBottomVisible(1)
 
             ## Practice (0-, 1- and 2-back examples). After it, the participant
             ## chooses with the mouse to repeat the practice or start the real test.
@@ -274,16 +288,17 @@ define TNT() {
 
                 #0-back example
                gLayout.header.text <- gstrings.headerzero
-                message <- EasyLabel(gstrings.zerobackprompt, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+               FitHeader()
+                message <- FitLabel(gstrings.zerobackprompt, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
                 restTime <- 5
                 while (restTime >= 1) {
-                    countdown <- EasyLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    countdown <- FitLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     Wait(1000)
                     restTime <- restTime - 1
                 }
-                countdown <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
-                message <- EasyLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+                countdown <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                message <- FitLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
 
                 listlength <- Length(zeroBackStimList)
                 stim <- RandomDiscrete(listlength)
@@ -324,13 +339,13 @@ define TNT() {
                     ## Update trial counter
                     gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", i], ["<NUMTRIALS>", gParams.numStimsAct]])
 
-                    number <- EasyLabel(Nth(zeroBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel(Nth(zeroBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     t0 <- GetTime()
                     resp <- WaitForLayoutResponse(gLayout, gParams.StimulusDuration)
                     t1 <- GetTime()
                     target <- Nth(zeroBackStim, i + 12)
-                    number <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
 
                     if (resp != "<timeout>") {
@@ -400,51 +415,52 @@ define TNT() {
                     }
 
                     if (resp != "<timeout>" and corr == 1) {
-                        message <- EasyLabel(gstrings.correct, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.correct, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     if (resp != "<timeout>" and corr == 0) {
-                        message <- EasyLabel(gstrings.incorrect, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.incorrect, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     if (resp == "<timeout>") {
-                        message <- EasyLabel(gstrings.tooslow, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.tooslow, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
 
 
                     i <- i + 1
 
-                    number <- EasyLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     Wait(gParams.isiTimeSecs)
 
-                    number <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
 
                 }
 
                 gLayout.header.text <- gstrings.headerone
+                FitHeader()
                 #1-back example
-                message <- EasyLabel(gstrings.onebackprompt, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+                message <- FitLabel(gstrings.onebackprompt, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
                 restTime <- 5
                 while (restTime >= 1) {
-                    countdown <- EasyLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    countdown <- FitLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     Wait(1000)
                     restTime <- restTime - 1
                 }
-                countdown <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
-                message <- EasyLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+                countdown <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                message <- FitLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
 
                 listlength <- Length(oneBackStimList)
                 stim <- RandomDiscrete(listlength)
@@ -484,13 +500,13 @@ define TNT() {
                     ## Update trial counter
                     gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", i], ["<NUMTRIALS>", gParams.numStimsAct]])
 
-                    number <- EasyLabel(Nth(oneBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel(Nth(oneBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     t0 <- GetTime()
                     resp <- WaitForLayoutResponse(gLayout, gParams.StimulusDuration)
                     t1 <- GetTime()
                     target <- Nth(oneBackStim, i + 12)
-                    number <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
 
                     if (resp != "<timeout>") {
@@ -560,49 +576,50 @@ define TNT() {
                     }
 
                     if (resp != "<timeout>" and corr == 1 and i != 1) {
-                        message <- EasyLabel(gstrings.correct, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.correct, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     if (resp != "<timeout>" and corr == 0 and i != 1) {
-                        message <- EasyLabel(gstrings.incorrect, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.incorrect, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     if (resp == "<timeout>" and i != 1) {
-                        message <- EasyLabel(gstrings.tooslow, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.tooslow, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     i <- i + 1
 
-                    number <- EasyLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     Wait(gParams.isiTimeSecs)
 
-                    number <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
 
                 }
 
                 # 2-back example
                 gLayout.header.text <- gstrings.headertwo
-                message <- EasyLabel(gstrings.twobackprompt, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+                FitHeader()
+                message <- FitLabel(gstrings.twobackprompt, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
                 restTime <- 5
                 while (restTime >= 1) {
-                    countdown <- EasyLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    countdown <- FitLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     Wait(1000)
                     restTime <- restTime - 1
                 }
-                countdown <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
-                message <- EasyLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+                countdown <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                message <- FitLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
 
                 listlength <- Length(twoBackStimList)
                 stim <- RandomDiscrete(listlength)
@@ -642,13 +659,13 @@ define TNT() {
                     ## Update trial counter
                     gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", i], ["<NUMTRIALS>", gParams.numStimsAct]])
 
-                    number <- EasyLabel(Nth(twoBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel(Nth(twoBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     t0 <- GetTime()
                     resp <- WaitForLayoutResponse(gLayout, gParams.StimulusDuration)
                     t1 <- GetTime()
                     target <- Nth(twoBackStim, i + 12)
-                    number <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
 
                     if (resp != "<timeout>") {
@@ -718,33 +735,33 @@ define TNT() {
                     }
 
                     if (resp != "<timeout>" and corr == 1 and i != 1 and i != 2) {
-                        message <- EasyLabel(gstrings.correct, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.correct, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     if (resp != "<timeout>" and corr == 0 and i != 1 and i != 2) {
-                        message <- EasyLabel(gstrings.incorrect, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.incorrect, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     if (resp == "<timeout>" and i != 1 and i != 2) {
-                        message <- EasyLabel(gstrings.tooslow, gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel(gstrings.tooslow, gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                         Wait(400)
-                        message <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
+                        message <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, 60)
                         Draw()
                     }
                     i <- i + 1
 
-                    number <- EasyLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
                     Wait(gParams.isiTimeSecs)
 
-                    number <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                    number <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                     Draw()
 
                 }
@@ -770,7 +787,7 @@ define TNT() {
         }
         LSLMarker("condition_" + condition + "_start")
 
-        number <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+        number <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
 
 	
         Draw()
@@ -797,16 +814,17 @@ define TNT() {
         if (str == "Zer") {
 
             gLayout.header.text <- gstrings.headerzero
-            message <- EasyLabel(PracticeString("zerobackstart", "0-Back trial will begin in"), gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+            FitHeader()
+            message <- FitLabel(PracticeString("zerobackstart", "0-Back trial will begin in"), gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
             restTime <- 5
             while (restTime >= 1) {
-                countdown <- EasyLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                countdown <- FitLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 Wait(1000)
                 restTime <- restTime - 1
             }
-            countdown <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
-            message <- EasyLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+            countdown <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+            message <- FitLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
 
             listlength <- Length(zeroBackStimList)
             stim <- RandomDiscrete(listlength)
@@ -846,13 +864,13 @@ define TNT() {
                 ## Update trial counter
                 gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", i], ["<NUMTRIALS>", gParams.numStimsAct]])
 
-                number <- EasyLabel(Nth(zeroBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                number <- FitLabel(Nth(zeroBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 t0 <- GetTime()
                 resp <- WaitForLayoutResponse(gLayout, gParams.StimulusDuration)
                 t1 <- GetTime()
                 target <- Nth(zeroBackStim, i + 12)
-                number <- EasyLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                number <- FitLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 Wait(gParams.isiTimeSecs)
 
@@ -932,17 +950,18 @@ define TNT() {
         if (str == "One") {
 
             gLayout.header.text <- gstrings.headerone
-            message <- EasyLabel(PracticeString("onebackstart", "1-Back trial will begin in"), gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+            FitHeader()
+            message <- FitLabel(PracticeString("onebackstart", "1-Back trial will begin in"), gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
             restTime <- 5
             Print(restTime)
             while (restTime >= 1) {
-                countdown <- EasyLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                countdown <- FitLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 Wait(1000)
                 restTime <- restTime - 1
             }
-            countdown <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
-            message <- EasyLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+            countdown <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+            message <- FitLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
 
             listlength <- Length(oneBackStimList)
             stim <- RandomDiscrete(listlength)
@@ -980,13 +999,13 @@ define TNT() {
                 ## Update trial counter
                 gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", i], ["<NUMTRIALS>", gParams.numStimsAct]])
 
-                number <- EasyLabel(Nth(oneBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                number <- FitLabel(Nth(oneBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 t0 <- GetTime()
                 resp <- WaitForLayoutResponse(gLayout, gParams.StimulusDuration)
                 t1 <- GetTime()
                 target <- Nth(oneBackStim, i + 12)
-                number <- EasyLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                number <- FitLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 Wait(gParams.isiTimeSecs)
 
@@ -1067,17 +1086,18 @@ define TNT() {
         if (str == "Two") {
 
             gLayout.header.text <- gstrings.headertwo
-            message <- EasyLabel(PracticeString("twobackstart", "2-Back trial will begin in"), gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+            FitHeader()
+            message <- FitLabel(PracticeString("twobackstart", "2-Back trial will begin in"), gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
             restTime <- 5
             Print(restTime)
             while (restTime >= 1) {
-                countdown <- EasyLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                countdown <- FitLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 Wait(1000)
                 restTime <- restTime - 1
             }
-            countdown <- EasyLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
-            message <- EasyLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+            countdown <- FitLabel("", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+            message <- FitLabel("", gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
 
             listlength <- Length(twoBackStimList)
             stim <- RandomDiscrete(listlength)
@@ -1115,13 +1135,13 @@ define TNT() {
                 ## Update trial counter
                 gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", i], ["<NUMTRIALS>", gParams.numStimsAct]])
 
-                number <- EasyLabel(Nth(twoBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                number <- FitLabel(Nth(twoBackStim, i), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 t0 <- GetTime()
                 resp <- WaitForLayoutResponse(gLayout, gParams.StimulusDuration)
                 t1 <- GetTime()
                 target <- Nth(twoBackStim, i + 12)
-                number <- EasyLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                number <- FitLabel("+", gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 Wait(gParams.isiTimeSecs)
 
@@ -1202,11 +1222,11 @@ define TNT() {
 
 
         if (str == "Res") {
-            message <- EasyLabel (gstrings.rest, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
+            message <- FitLabel(gstrings.rest, gLayout.centerX, gLayout.centerY - 100, gWin, gParams.InstructionTextSize)
             restTime <- gParams.numStimsRest * 3
             Print(restTime)
             while (restTime >= 1) {
-                countdown <- EasyLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
+                countdown <- FitLabel(ToString(restTime), gLayout.centerX, gLayout.centerY, gWin, gParams.InstructionTextSize)
                 Draw()
                 Wait(1000)
                 restTime <- restTime - 1
@@ -1249,6 +1269,7 @@ define TNT() {
     FileClose(gfile1)
 
 	gLayout.header.text <- gStrings.debrief
+	FitHeader()
 	Draw()
 	WaitForLayoutResponse(gLayout, 300000)
 }
@@ -1286,8 +1307,8 @@ define PracticeChoice(text, win, fontsize:30)
   box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
 
   y <- gVideoHeight - 110
-  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
-  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
+  repeatLab <- FitLabel(repeatText, gVideoWidth/2, y, win, 28)
+  startLab  <- FitLabel(startText, gVideoWidth/2, y, win, 28)
   w <- Max([repeatLab.width, startLab.width]) + 60
   Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
   Move(startLab, gVideoWidth/2 + w/2 + 30, y)
@@ -1304,6 +1325,56 @@ define PracticeChoice(text, win, fontsize:30)
   RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
   Draw()
   return choice
+}
+
+## ---- Fit text to the window ------------------------------------------------
+## Font sizes in this test are fixed pixel sizes, but the window PEBL gets
+## depends on the laptop: screen resolution divided by the Windows "Scale"
+## setting (e.g. 1920x1200 at 150% = 1280x800). These helpers shrink a label's
+## font only when its text is wider than the window, so nothing is cut off.
+
+## EasyLabel that shrinks its font until the text fits the window width
+define FitLabel(text, x, y, win, size)
+{
+  lab <- EasyLabel(text, x, y, win, size)
+  ShrinkToWidth(lab, size, gVideoWidth - 60)
+  return lab
+}
+
+## Header: back to its normal size, then shrunk if the new text is too wide
+define FitHeader()
+{
+  ShrinkToWidth(gLayout.header, gHeaderSize, gVideoWidth - 60, 1)
+}
+
+define ShrinkToWidth(lab, size, maxw, always:0)
+{
+  fnt <- lab.font
+  if(always)
+  {
+    lab.font <- MakeFont(fnt.filename, 0, size, fnt.fgcolor, fnt.bgcolor, fnt.antialiased)
+  }
+  s <- size
+  while(lab.width > maxw and s > 10)
+  {
+    s <- Max([10, Min([s - 1, Floor(s * maxw / lab.width)])])
+    lab.font <- MakeFont(fnt.filename, 0, s, fnt.fgcolor, fnt.bgcolor, fnt.antialiased)
+  }
+}
+
+## Shows (1) or hides (0) the response labels and the footer at the bottom of
+## the screen. In mouse-target mode the labels are what the participant clicks,
+## so they always stay visible.
+define SetBottomVisible(v)
+{
+  if(gLayout.responseMode.type != "mousetarget")
+  {
+    loop(lab, gLayout.responseLabels)
+    {
+      lab.visible <- v
+    }
+    gLayout.footer.visible <- v
+  }
 }
 
 ## Text from the translation file, or the English default if the current

@@ -272,7 +272,9 @@ define Likert(question)
 
    
     ##spread should be a total of at least 640 pixels, or 80 per option
-    skip <- 150
+    ## (wider boxes when the window allows it, so long words like
+    ## "Moderadamente" are not split; at most 190, fits 5 options in the window)
+    skip <- Max([150, Min([190, Floor((gVideoWidth - 40)/5)])])
 
     ##Add the question:
     questionHead <- MakeLabel(gQuestionHead, gQuestFont)

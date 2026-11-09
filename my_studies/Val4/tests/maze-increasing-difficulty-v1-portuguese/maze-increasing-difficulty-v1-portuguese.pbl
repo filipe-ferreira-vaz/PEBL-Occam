@@ -92,10 +92,15 @@ define Start(p)
 
   Setup()
   inst <- AdaptiveTextBox(gStrings.inst1,gVideoWidth/2-395,10,gWin,20,780,200,"scalefont")
+  ## Practice maze: 400 x 400 below the instruction box (which ends at y = 210).
+  ## On short windows (small screen / Windows scaling) it gets smaller so it
+  ## does not go under the box or off the bottom of the window.
+  gPracticeSize <- Min([400, gVideoHeight - 240])
+  gPracticeY <- Max([gVideoHeight/2+55, 220 + gPracticeSize/2])
   SeedRNG(100)
 
   ## make a 'green' practice maze and show it:
-  practice <-  MakeMaze(5,5,[1,1],[5,5],gVideoWidth/2,gVideoHeight/2+55,400,400)
+  practice <-  MakeMaze(5,5,[1,1],[5,5],gVideoWidth/2,gPracticeY,gPracticeSize,gPracticeSize)
   practice.id <- "PRACTICE"
   practice.order <- 0   ##the practice maze is order 0 in the csv
   Kruskal(practice)
@@ -128,7 +133,7 @@ define Start(p)
     ##(a fresh maze object each time, same seed so every repeat is run
     ## exactly like the first practice)
     SeedRNG(100)
-    practice <- MakeMaze(5,5,[1,1],[5,5], gVideoWidth/2,gVideoHeight/2+55,400,400)
+    practice <- MakeMaze(5,5,[1,1],[5,5], gVideoWidth/2,gPracticeY,gPracticeSize,gPracticeSize)
     practice.id <- "PRACTICE"
     practice.order <- 0   ##the practice maze is order 0 in the csv
     LSLMarker("block_practice_start")
