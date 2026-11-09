@@ -1,0 +1,16 @@
+{
+ "INSTRUCTIONS": "O que sinto sobre esta tarefa?\n\nAbaixo encontram-se questões sobre a tarefa que acabou de fazer. Por favor, coloque o número que corresponde ao grau em que acredita que a frase se aplica à sua experiência enquanto fazia a tarefa. Não há respostas certas nem erradas; responda com sinceridade.",
+ "QUESTIONHEAD_1": "De 1 (muito difícil) a 7 (nada difícil) quão difícil considerou esta tarefa?",
+ "QUESTIONHEAD_2": "De 1 (muito frustrante) a 7 (nada frustrante) quão frustrante considerou a tarefa?",
+ "QUESTIONHEAD_3": "De 1 (muito interessante) a 7 (nada interessante) quão interessante considerou a tarefa?",
+ "QUESTIONHEAD_4": "De 1 (muito agradável) a 7 (nada agradável) quão agradável considerou a tarefa?",
+ "ANCHOR_1_LOW": "Muito difícil",
+ "ANCHOR_1_HIGH": "Nada difícil",
+ "ANCHOR_2_LOW": "Muito frustrante",
+ "ANCHOR_2_HIGH": "Nada frustrante",
+ "ANCHOR_3_LOW": "Muito interessante",
+ "ANCHOR_3_HIGH": "Nada interessante",
+ "ANCHOR_4_LOW": "Muito agradável",
+ "ANCHOR_4_HIGH": "Nada agradável",
+ "DEBRIEFING": "Obrigada por responder a este questionário. Carregue em OK para avançar."
+}

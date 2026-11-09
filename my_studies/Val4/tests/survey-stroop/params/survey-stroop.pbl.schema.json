@@ -1,0 +1,17 @@
+{
+  "test": "survey-stroop",
+  "version": "1.0",
+  "description": "Task survey after the stroop task (European Portuguese)",
+  "parameters": [
+    {
+      "name": "shufflequestions",
+      "type": "boolean",
+      "default": 0,
+      "description": "Should the 4 questions be shuffled?",
+      "options": [
+        0,
+        1
+      ]
+    }
+  ]
+}

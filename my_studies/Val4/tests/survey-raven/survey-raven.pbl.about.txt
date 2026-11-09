@@ -1,0 +1,15 @@
+Task survey ("O que sinto sobre esta tarefa?") to give right after the
+raven task. European Portuguese; always runs in Portuguese
+(translations/survey-raven.pbl-pt.json).
+
+Four questions about the task just done, each answered by clicking a box
+from 1 to 7. Only boxes 1 and 7 have a text label (e.g. 1 = Muito difícil,
+7 = Nada difícil); boxes 2-6 show only the number.
+  q1 difficulty, q2 frustration, q3 interest, q4 enjoyment
+  (1 = very ..., 7 = not ... at all)
+
+Data: data/<code>/survey-raven-<code>.csv (one row per question),
+      data/<code>/survey-raven-report-<code>.txt,
+      data/survey-raven-pooled.csv (one row per participant: q1-q4, rt1-rt4).
+
+Parameter: shufflequestions (0/1, default 0) randomizes the question order.

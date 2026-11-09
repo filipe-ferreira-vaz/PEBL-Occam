@@ -155,6 +155,48 @@
       "included": true,
       "test_name": "affectgrid-portuguese",
       "test_path": "affectgrid-portuguese"
+    },
+    {
+      "display_name": "survey-vsearch",
+      "included": true,
+      "test_name": "survey-vsearch",
+      "test_path": "survey-vsearch"
+    },
+    {
+      "display_name": "survey-TNT",
+      "included": true,
+      "test_name": "survey-TNT",
+      "test_path": "survey-TNT"
+    },
+    {
+      "display_name": "survey-maze",
+      "included": true,
+      "test_name": "survey-maze",
+      "test_path": "survey-maze"
+    },
+    {
+      "display_name": "survey-stroop",
+      "included": true,
+      "test_name": "survey-stroop",
+      "test_path": "survey-stroop"
+    },
+    {
+      "display_name": "survey-ptrails",
+      "included": true,
+      "test_name": "survey-ptrails",
+      "test_path": "survey-ptrails"
+    },
+    {
+      "display_name": "survey-raven",
+      "included": true,
+      "test_name": "survey-raven",
+      "test_path": "survey-raven"
+    },
+    {
+      "display_name": "survey-tol",
+      "included": true,
+      "test_name": "survey-tol",
+      "test_path": "survey-tol"
     }
   ],
   "upload_server_url": "",

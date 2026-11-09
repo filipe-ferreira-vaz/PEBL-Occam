@@ -1,0 +1,499 @@
+## survey-raven: task survey ("O que sinto sobre esta tarefa?") given after the
+## raven task. European Portuguese, 4 questions rated 1-7:
+##   q1 difficulty    1 = muito dificil      7 = nada dificil
+##   q2 frustration   1 = muito frustrante   7 = nada frustrante
+##   q3 interest      1 = muito interessante 7 = nada interessante
+##   q4 enjoyment     1 = muito agradavel    7 = nada agradavel
+## Based on the Val4 bigfive-portuguese test. Only the end points (1 and 7)
+## show a text label; boxes 2-6 show just the number.
+## All survey-<task> tests are the same except for the task name, which goes
+## into the file names and the "task" data column.
+
+
+define Start(p)
+{
+
+  parpairs <- [["shufflequestions",0]]
+
+  InitializeUpload()
+
+  gParams <- CreateParameters(parpairs,gParamFile)
+
+  gTaskName <- "raven"
+  gTestName <- "survey-raven"
+
+  gSleepEasy <- 1
+  GetStrings(gLanguage)
+  MakeDirectory("data")
+
+   gWin <- MakeWindow("black")
+   InitializeLSL(gWin)  ## Initialize LSL outlet if --lsl flag was used (shows prompt)
+   BeepsStart()  ## auto-added by setup-study.bat
+
+   if(gSubNum+""=="0")
+   {
+    gSubNum <- GetSubNum(gWin)
+   }
+
+   suboutfile <- GetNewDataFile(gSubNum,gWin,gTestName,"csv",
+                          "subnum,task,order,time,qnum,ques,resp,rt")
+   dir <- GetDirectory(suboutfile.filename)+"../"
+
+   ##Now, create a report file to output text report
+   reportFile <- GetNewDataFile(gSubNum,gWin,gTestName+"-report","txt","")
+
+   ##open a pooled file for appending if it exists, in parent directory of subject directory.
+   pooledfname <- dir + gTestName + "-pooled.csv"
+   if(FileExists(pooledfname))
+   {
+       pooledfile <- FileOpenAppend(pooledfname)
+   } else {
+       pooledfile <- FileOpenWrite(pooledfname)
+       FilePrint(pooledfile, "subnum,task,timestamp,time,q1,q2,q3,q4,rt1,rt2,rt3,rt4")
+   }
+
+
+   gQuestfont <- MakeFont(gPEBLBaseFont,0,30,MakeColor("white"),MakeColor("black"),0)
+   gNumFont <- MakeFont(gPEBLBaseFont,0,35,MakeColor("white"),MakeColor("black"),0)
+   gSmallFont <- MakeFont(gPEBLBaseFont,0,18,MakeColor("white"),MakeColor("black"),0)
+   gTinyFont <- MakeFont(gPEBLBaseFont,0,14,MakeColor("white"),MakeColor("black"),0)
+
+  ## [qnum, question key, label key for 1, label key for 7]
+  questionData <- [
+    ["1", "questionhead_1", "anchor_1_low", "anchor_1_high"],
+    ["2", "questionhead_2", "anchor_2_low", "anchor_2_high"],
+    ["3", "questionhead_3", "anchor_3_low", "anchor_3_high"],
+    ["4", "questionhead_4", "anchor_4_low", "anchor_4_high"]
+  ]
+
+  ## Get the text from the translation file: [qnum, question, label1, label7]
+  questions <- []
+  loop(qd, questionData)
+  {
+    PushOnEnd(questions, [First(qd),
+                          GetProperty(gStrings, Second(qd)),
+                          GetProperty(gStrings, Third(qd)),
+                          GetProperty(gStrings, Fourth(qd))])
+  }
+
+  if(gParams.shufflequestions)
+   {
+     questions <- Shuffle(questions)
+   }
+
+   ## answers by question number (pooled file stays in q1-q4 order even when shuffled)
+   ratings <- ["NA","NA","NA","NA"]
+   rts <- ["NA","NA","NA","NA"]
+
+   ##DO THE INSTRUCTIONS:
+   MessageBox(gInst,gWin)
+
+   LSLMarker("survey_start")
+   startTime <- GetTime()
+   questorder <- 1
+   loop(q,questions)
+   {
+     LSLMarker("question_" + First(q))
+     resp <- Likert(Second(q), Third(q), Fourth(q))
+     LSLMarker("response_" + First(resp))
+     qnum <- ToNumber(First(q))
+     SetElement(ratings, qnum, First(resp))
+     SetElement(rts, qnum, Second(resp))
+     ## Quote the question text: it contains commas.
+     printline <- [gSubNum, gTaskName, questorder, GetTime(), First(q),
+                   gQuote+Second(q)+gQuote, First(resp), Second(resp)]
+     FilePrint(subOutFile,ConcatenateList(printline,","))
+     questorder <- questorder + 1
+   }
+   LSLMarker("survey_end")
+
+
+   completiontime <- ((GetTime()-starttime)/1000/60)
+   FilePrint(pooledfile,gSubNum+","+gTaskName+","+TimeStamp()+","+completiontime+","+
+                        ConcatenateList(ratings,",")+","+ConcatenateList(rts,","))
+
+
+   FilePrint(reportfile,CR(2)+"--------------------------------------------------------------------")
+   FilePrint(reportfile,"Task survey (O que sinto sobre esta tarefa?) - task: " + gTaskName)
+   FilePrint(reportfile,"Implementation part of the PEBL Project")
+   FilePrint(reportfile,"http://pebl.sf.net"+CR(3))
+   FilePrint(reportfile,CR(2)+"--------------------------------------------------------------------")
+   FilePrint(reportfile,TimeStamp())
+   FilePrint(reportfile,GetPEBLVersion())
+   FilePrint(reportfile,"Participant code:" +gSubNum)
+   FilePrint(reportfile,"Time to complete: "+ completiontime + " min.")
+
+   FilePrint(reportfile,CR(2)+"Ratings (1-7; 1 = very, 7 = not at all):")
+   labels <- ["Difficulty (1 = very difficult)",
+              "Frustration (1 = very frustrating)",
+              "Interest (1 = very interesting)",
+              "Enjoyment (1 = very enjoyable)"]
+   loop(i,Transpose([labels,ratings]))
+    {
+       FilePrint(reportfile,Format(First(i)+":",40)+""+ Second(i))
+    }
+
+   FilePrint(reportfile,CR(2)+"--------------------------------------------------------------------")
+   FileClose(reportfile)
+   FileClose(pooledfile)
+   FileClose(suboutfile)
+
+   ## Finalize LSL
+   BeepsEnd()  ## auto-added by setup-study.bat
+   FinalizeLSL()
+
+   UploadFile(gSubnum,reportfile.filename)
+   UploadFile(gSubnum,pooledfile.filename)
+   UploadFile(gSubnum,suboutfile.filename)
+
+  MessageBox(gDebriefing,gWin)
+}
+
+
+
+## Shows one question with 7 clickable boxes. Every box shows its number;
+## boxes 1 and 7 also show the end-point labels (lowText, highText).
+## Returns [response, rt].
+define Likert(question, lowText, highText)
+{
+    ## box spacing: up to 140 px, narrower on small screens
+    ## (smaller label font there so "interessante" fits on one line)
+    skip <- Min([140, Floor((gVideoWidth-40)/7)])
+    if(skip >= 130)
+     {
+      labelFont <- gSmallFont
+     } else {
+      labelFont <- gTinyFont
+     }
+    objects <- []
+
+    ##Add the question (wrapped, centered):
+    qwidth <- Min([gVideoWidth-80, 900])
+    questionL <- MakeTextBox(question,gQuestFont,qwidth,140)
+    questionL.justify <- "CENTER"
+    AddObject(questionL,gWin)
+    Move(questionL,gVideoWidth/2-qwidth/2,Max([40, gVideoHeight/2-230]))
+    PushOnEnd(objects,questionL)
+
+    left <- gVideoWidth/2-skip*4
+    yval <- gVideoHeight/2+20
+
+    backs <- []
+    loop(i,[1,2,3,4,5,6,7])
+     {
+      x <- left + skip * i
+      back <- Rectangle(x,yval+50,skip-10,180,MakeColor("white"),0)
+      AddObject(back,gWin)
+      num <- MakeLabel(i+"",gNumFont)
+      Move(num, x,yval)
+      AddObject(num,gWin)
+      PushOnEnd(backs,back)
+      PushOnEnd(objects,back)
+      PushOnEnd(objects,num)
+
+      ## only the end points get a text label
+      if(i == 1 or i == 7)
+       {
+        if(i == 1)
+         {
+          optText <- lowText
+         } else {
+          optText <- highText
+         }
+        optLabel <- MakeTextBox(optText,labelFont,skip-12,90)
+        optLabel.justify <- "CENTER"
+        AddObject(optLabel,gWin)
+        Move(optLabel,x-optLabel.width/2,yval+40)
+        PushOnEnd(objects,optLabel)
+       }
+     }
+
+  Draw()
+  t1 <- GetTime()
+  response <-WaitForClickOnTarget(backs,[1,2,3,4,5,6,7])
+  t2 <- GetTime()
+
+  ## clear this question before the next one
+  loop(o,objects)
+   {
+     RemoveObject(o,gWin)
+   }
+  Draw()
+
+  return [response,(t2-t1)]
+}
+
+
+define GetStrings(lang)
+{
+  ## This survey always runs in European Portuguese, whatever --language is.
+  gStrings <- ReadTranslationJSON("translations/survey-raven.pbl-pt.json", "PT")
+
+  gInst <- gStrings.instructions
+  gDebriefing <- gStrings.debriefing
+}
+
+
+## >>> BEGIN beeps.pbl (auto-copied, do not edit)
+##########################################################
+## beeps.pbl -- reusable pure-tone (sine wave) functions
+##
+## PEBL has no import statement, so this file is COPIED into each test
+## by setup-study.bat (from <study>/utils/beeps.pbl). Edit only that copy,
+## then re-run setup-study.bat.
+##
+## Standard start/end beeps: setup-study.bat also inserts
+##     BeepsStart()   right after the test's LSL setup line (window just opened)
+##     BeepsEnd()     right before the test's LSL shutdown line (test finished)
+## so every synced test beeps at its start and end automatically. BeepsEnd()
+## also saves all beeps to data/<subject>/beeps-<subject>.csv.
+## To opt a test out of the automatic calls, put this line anywhere in it:
+##     ## beeps: no auto calls
+## (the functions below stay available for calling by hand).
+##
+## Why not MakeSineWave()?  In this PEBL build (2.4, Windows) MakeSineWave()
+## returns a sound with no audio buffer: it plays for 0 ms. Instead, each
+## tone is written once to a .wav file (via a small PowerShell helper) in the
+## test's folder, e.g. tone-1000Hz-50ms-a0.8.wav, and loaded with LoadSound().
+## Later runs reuse the cached file, so the PowerShell call only happens the
+## first time a given frequency/duration/amplitude is requested.
+##
+## Functions:
+##   MakeTone(freq, durationMs, amplitude:0.8)
+##        Returns a sound object you can pass to PlayTone/PlayBackground.
+##        Call it early (e.g. during setup) to avoid the one-time ~0.3 s
+##        generation delay and the up-to-1 s clock sync (see below) at
+##        play time.
+##   PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+##        Plays a tone and returns its onset timestamp (GetTime(), ms).
+##        blocking=1 waits for the tone to finish (use it right before the
+##        script exits). Each play is recorded in gToneLog.
+##   Beep(label:"beep")
+##        Shortcut: 1000 Hz, 50 ms, amplitude 0.8, non-blocking.
+##   BeepsStart() / BeepsEnd()
+##        Standard 1000 Hz / 50 ms start and end beeps (see above). The end
+##        beep is blocking and followed by a 250 ms wait, so it finishes
+##        playing before the test closes.
+##   GetToneLog()
+##        List of [label, freq, durationMs, amplitude, timestamp, clocktime]
+##        for every tone played so far.
+##
+## timestamp comes from GetTime(), so it is on the same clock as the RTs and
+## abstime values PEBL tests already record.
+## clocktime is the PC's local clock time, "YYYY-MM-DD HH:MM:SS.mmm".
+## PEBL's TimeStamp() only has 1 s resolution (and GetTimeOfDay() returns a
+## broken value in this build), so on first use the library waits for the PC
+## clock's second to tick over (up to 1 s), records GetTime() at that instant,
+## and afterwards computes clock time = that second + elapsed GetTime().
+##########################################################
+
+define MakeTone(freq, durationMs, amplitude:0.8)
+{
+  ToneClockSync()
+  key <- freq + "Hz-" + durationMs + "ms-a" + amplitude
+
+  ## reuse an already-loaded sound
+  if(not VariableExists("gToneCache"))
+  {
+    gToneCache <- []
+  }
+  sound <- 0
+  loop(pair, gToneCache)
+  {
+    if(First(pair) == key)
+    {
+      sound <- Second(pair)
+    }
+  }
+
+  if(IsNumber(sound))
+  {
+    filename <- "tone-" + key + ".wav"
+    if(not FileExists(filename))
+    {
+      ToneWriteHelper()
+      cmd <- "powershell -NoProfile -ExecutionPolicy Bypass -File beeps-maketone.ps1" +
+             " -f " + freq + " -d " + durationMs + " -a " + amplitude + " -o " + filename
+      SystemCall(cmd, "")
+      if(not FileExists(filename))
+      {
+        SignalFatalError("beeps.pbl: could not create " + filename +
+                         " (PowerShell is required to generate tones)")
+      }
+    }
+    sound <- LoadSound(filename)
+    gToneCache <- Append(gToneCache, [key, sound])
+  }
+  return(sound)
+}
+
+
+define PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+{
+  sound <- MakeTone(freq, durationMs, amplitude)
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+
+  t <- GetTime()
+  if(blocking)
+  {
+    PlayForeground(sound)
+  } else {
+    PlayBackground(sound)
+  }
+
+  gToneLog <- Append(gToneLog, [label, freq, durationMs, amplitude, t, ToneClockTime(t)])
+  return(t)
+}
+
+
+define Beep(label:"beep")
+{
+  return(PlayTone(1000, 50, 0.8, 0, label))
+}
+
+
+## Syncs GetTime() to the PC clock once (waits up to 1 s the first time).
+## Returns [GetTime() at a whole second, that second as ms since midnight].
+define ToneClockSync()
+{
+  if(not VariableExists("gToneClockAnchor"))
+  {
+    ts0 <- TimeStamp()
+    ts <- ts0
+    while(ts == ts0)
+    {
+      ts <- TimeStamp()
+    }
+    t <- GetTime()
+    gToneClockAnchor <- [t, Nth(ToneParseTimeStamp(ts),4)*1000]
+  }
+  return(gToneClockAnchor)
+}
+
+
+## Converts a GetTime() value to PC local clock time "YYYY-MM-DD HH:MM:SS.mmm"
+define ToneClockTime(t)
+{
+  anchor <- ToneClockSync()
+  date <- ToneParseTimeStamp(TimeStamp())
+  ms <- Mod(Second(anchor) + t - First(anchor), 86400000)
+  clock <- Nth(date,1) + "-" + ZeroPad(Nth(date,2),2) + "-" + ZeroPad(Nth(date,3),2) + " " +
+           ZeroPad(Floor(ms/3600000),2) + ":" + ZeroPad(Floor(Mod(ms,3600000)/60000),2) + ":" +
+           ZeroPad(Floor(Mod(ms,60000)/1000),2) + "." + ZeroPad(Mod(ms,1000),3)
+  return(clock)
+}
+
+
+## Parses TimeStamp() text like "Fri Oct 09 20:31:36 2026"
+## into [year, month, day, seconds since midnight]
+define ToneParseTimeStamp(ts)
+{
+  tokens <- []
+  loop(tok, SplitString(ts, " "))
+  {
+    if(tok != "")
+    {
+      tokens <- Append(tokens, tok)
+    }
+  }
+  month <- 1
+  i <- 1
+  loop(name, ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+  {
+    if(name == Nth(tokens,2))
+    {
+      month <- i
+    }
+    i <- i + 1
+  }
+  hms <- SplitString(Nth(tokens,4), ":")
+  secs <- ToNumber(Nth(hms,1))*3600 + ToNumber(Nth(hms,2))*60 + ToNumber(Nth(hms,3))
+  return([ToNumber(Nth(tokens,5)), month, ToNumber(Nth(tokens,3)), secs])
+}
+
+
+## Standard start beep (inserted automatically by setup-study.bat)
+define BeepsStart()
+{
+  MakeTone(1000, 50)   ## generate/load and sync the clock before playing
+  return(Beep("beep_start"))
+}
+
+
+## Standard end beep (inserted automatically by setup-study.bat).
+## Blocking, then saves every beep of this run to data/<subject>/beeps-<subject>.csv
+## The blocking play only waits until PEBL has handed the tone to the sound
+## card (~50 ms); the end of the tone is still queued in Windows' audio buffer.
+## Tests that close right after BeepsEnd() (e.g. affectgrid, TNT) would cut
+## the tone off, so wait 250 ms for the buffer to drain before returning.
+define BeepsEnd()
+{
+  t <- PlayTone(1000, 50, 0.8, 1, "beep_end")
+  Wait(250)
+  BeepsWriteLog()
+  return(t)
+}
+
+
+## Writes all beeps played so far to data/<subject>/beeps-<subject>.csv
+## (the same folder as the test's other data files; appends if it exists)
+define BeepsWriteLog()
+{
+  dir <- "data/" + gSubNum
+  if(not IsDirectory("data"))
+  {
+    MakeDirectory("data")
+  }
+  if(not IsDirectory(dir))
+  {
+    MakeDirectory(dir)
+  }
+  filename <- dir + "/beeps-" + gSubNum + ".csv"
+  isnew <- not FileExists(filename)
+  out <- FileOpenAppend(filename)
+  if(isnew)
+  {
+    FilePrint(out, "subnum,event,freq,durationms,amplitude,abstime,clocktime")
+  }
+  loop(tone, GetToneLog())
+  {
+    FilePrint(out, gSubNum + "," + ConcatenateList(tone, ","))
+  }
+  FileClose(out)
+  return(filename)
+}
+
+
+define GetToneLog()
+{
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+  return(gToneLog)
+}
+
+
+## Writes the PowerShell WAV generator next to the test (once).
+## Output: 44.1 kHz, 16-bit, mono PCM sine wave.
+define ToneWriteHelper()
+{
+  helper <- "beeps-maketone.ps1"
+  if(not FileExists(helper))
+  {
+    ps <- FileOpenOverwrite(helper)
+    FilePrint(ps, "param([double]$f,[int]$d,[double]$a,[string]$o)")
+    FilePrint(ps, "$sr=44100; $n=[int]($sr*$d/1000); $ms=New-Object IO.MemoryStream; $w=New-Object IO.BinaryWriter($ms)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36+$n*2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))")
+    FilePrint(ps, "$w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr*2)); $w.Write([int16]2); $w.Write([int16]16)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n*2))")
+    FilePrint(ps, "for($i=0;$i -lt $n;$i++){ $w.Write([int16][Math]::Round(32767*$a*[Math]::Sin(2*[Math]::PI*$f*$i/$sr))) }")
+    FilePrint(ps, "$w.Flush(); [IO.File]::WriteAllBytes((Join-Path (Get-Location) $o),$ms.ToArray())")
+    FileClose(ps)
+  }
+  return(helper)
+}
+## <<< END beeps.pbl
