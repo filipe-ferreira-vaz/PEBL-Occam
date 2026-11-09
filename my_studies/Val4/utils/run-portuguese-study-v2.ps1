@@ -13,25 +13,29 @@
 #   session         A or B
 # and runs
 #   Session A  bigfive-portuguese
-#              affectgrid-portuguese
-#              the 4 tests below in the participant's order, each followed by its survey:
-#                vsearch-customize-portuguese         searchsizes 40,50,60 (rest default)  + survey-vsearch
-#                TNT-custom-stimulus-time-portuguese  StimulusDuration 4000 ms             + survey-TNT
-#                maze-increasing-difficulty-v1-portuguese                                  + survey-maze
-#                stroop (external, not PEBL)                                               + survey-stroop
-#              affectgrid-portuguese
-#   Session B  affectgrid-portuguese
-#              the 4 tests below in the participant's order, each followed by its survey:
-#                ptrails-pt-portuguese                                                     + survey-ptrails
-#                raven matrices (external, not PEBL)                                       + survey-raven
-#                tol-portuguese/TOL-portuguese                                             + survey-tol
-#                auditory go/no-go (external, not PEBL)                                    + survey-gonogo (run only if that test exists)
-#              affectgrid-portuguese
+#              affectgrid-portuguese-A
+#              the 4 tests below in the participant's order, with the EMA survey after the 2nd:
+#                vsearch-customize-portuguese         searchsizes 40,50,60 (rest default)
+#                TNT-custom-stimulus-time-portuguese  StimulusDuration 4000 ms
+#                maze-increasing-difficulty-v1-portuguese
+#                stroop (external, not PEBL)
+#              affectgrid-portuguese-A
+#   Session B  affectgrid-portuguese-B
+#              the 4 tests below in the participant's order, with the EMA survey after the 2nd:
+#                ptrails-pt-portuguese
+#                raven matrices (external, not PEBL)
+#                tol-portuguese/TOL-portuguese
+#                auditory go/no-go (external, not PEBL)
+#              affectgrid-portuguese-B
+#   EMA survey = Survey Ecological Momentary Assessment (external, not PEBL):
+#   test 1, test 2, EMA survey, test 3, test 4.
 # For an external test the script only says what to do and waits for Enter.
 #
-# affectgrid-portuguese runs twice per session under the same ID (and again in
-# the other session): from its 2nd run on PEBL asks "Choose new code / Add
-# Session"; click "Add Session" so the ratings are added to the same file.
+# affectgrid-portuguese-A and -B are copies of affectgrid-portuguese, one per
+# session, so their data are kept in separate folders. Each runs twice per
+# session under the same ID. It gets addsession = 1 (params/portuguese-study.par.json),
+# so from its 2nd run on it adds the ratings to the same file without asking
+# "Choose new code / Add Session". Run on its own, it still asks.
 #
 # Counterbalancing: each participant's fixed order is read from
 # counterbalance/portuguese-study-v2-orders.csv (one row per ID 1-300, columns
@@ -49,7 +53,8 @@
 #   b = go back to the previous test (type b again to go further back), e.g. to
 #   run again a test whose window was closed by accident. After the last test it
 #   waits once more (Enter = finish, b = back). A PEBL test run again under the
-#   same ID asks "Choose new code / Add Session": click "Add Session".
+#   same ID (other than affectgrid) asks "Choose new code / Add Session": click
+#   "Add Session".
 # A row per PEBL test run is added to logs/launcher-log.csv of the PEBL workspace, if there is one.
 
 param(
@@ -199,39 +204,23 @@ function Run-Step($t) {
   }
 }
 
-$affect  = Step 'affectgrid-portuguese' 'affectgrid-portuguese' 'affectgrid-portuguese'
+$affectName = "affectgrid-portuguese-$Session"
+$affect  = Step $affectName $affectName $affectName "{`r`n  `"addsession`": 1`r`n}`r`n"
 $bigfive = Step 'bigfive-portuguese' 'bigfive-portuguese' 'bigfive-portuguese'
 
-# Counterbalanced tests: the test, then its survey
+# Counterbalanced tests (one step each)
 $tests = @{
-  vsearch = @(
-    (Step 'vsearch-customize-portuguese (search sizes 40,50,60)' 'vsearch-customize-portuguese' 'vsearch-customize-portuguese' "{`r`n  `"searchsizes`": [40,50,60]`r`n}`r`n"),
-    (Step 'survey-vsearch' 'survey-vsearch' 'survey-vsearch'))
-  tnt = @(
-    (Step 'TNT-custom-stimulus-time-portuguese (stimulus 4000 ms)' 'TNT-custom-stimulus-time-portuguese' 'TNT-custom-stimulus-time-portuguese' "{`r`n  `"StimulusDuration`": 4000`r`n}`r`n"),
-    (Step 'survey-TNT' 'survey-TNT' 'survey-TNT'))
-  maze = @(
-    (Step 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese'),
-    (Step 'survey-maze' 'survey-maze' 'survey-maze'))
-  stroop = @(
-    (Step 'stroop (EXTERNAL - not PEBL)' '' '' $null 'Stroop test'),
-    (Step 'survey-stroop' 'survey-stroop' 'survey-stroop'))
-  ptrails = @(
-    (Step 'ptrails-pt-portuguese' 'ptrails-pt-portuguese' 'ptrails-pt-portuguese'),
-    (Step 'survey-ptrails' 'survey-ptrails' 'survey-ptrails'))
-  raven = @(
-    (Step 'raven matrices (EXTERNAL - not PEBL)' '' '' $null 'Raven matrices'),
-    (Step 'survey-raven' 'survey-raven' 'survey-raven'))
-  tol = @(
-    (Step 'tol-portuguese/TOL-portuguese' 'tol-portuguese' 'TOL-portuguese'),
-    (Step 'survey-tol' 'survey-tol' 'survey-tol'))
-  gonogo = @(
-    (Step 'auditory go/no-go (EXTERNAL - not PEBL)' '' '' $null 'auditory go/no-go test'))
+  vsearch = Step 'vsearch-customize-portuguese (search sizes 40,50,60)' 'vsearch-customize-portuguese' 'vsearch-customize-portuguese' "{`r`n  `"searchsizes`": [40,50,60]`r`n}`r`n"
+  tnt     = Step 'TNT-custom-stimulus-time-portuguese (stimulus 4000 ms)' 'TNT-custom-stimulus-time-portuguese' 'TNT-custom-stimulus-time-portuguese' "{`r`n  `"StimulusDuration`": 4000`r`n}`r`n"
+  maze    = Step 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese'
+  stroop  = Step 'stroop (EXTERNAL - not PEBL)' '' '' $null 'Stroop test'
+  ptrails = Step 'ptrails-pt-portuguese' 'ptrails-pt-portuguese' 'ptrails-pt-portuguese'
+  raven   = Step 'raven matrices (EXTERNAL - not PEBL)' '' '' $null 'Raven matrices'
+  tol     = Step 'tol-portuguese/TOL-portuguese' 'tol-portuguese' 'TOL-portuguese'
+  gonogo  = Step 'auditory go/no-go (EXTERNAL - not PEBL)' '' '' $null 'auditory go/no-go test'
 }
-# There is no survey-gonogo test yet: it is added after go/no-go only if its folder exists
-if (Test-Path (Join-Path $studyDir 'tests\survey-gonogo\survey-gonogo.pbl')) {
-  $tests.gonogo += (Step 'survey-gonogo' 'survey-gonogo' 'survey-gonogo')
-}
+# Between the 2nd and 3rd counterbalanced test
+$ema = Step 'Survey Ecological Momentary Assessment (EXTERNAL - not PEBL)' '' '' $null 'Survey Ecological Momentary Assessment'
 
 $orders = if ($Session -eq 'A') { $ordersA } else { $ordersB }
 $pool   = if ($Session -eq 'A') { $poolA } else { $poolB }
@@ -251,7 +240,9 @@ for ($k = 0; $k -lt $orders.Count; $k++) { if (($orders[$k] -join ' ') -eq ($key
 $steps = @()
 if ($Session -eq 'A') { $steps += $bigfive }
 $steps += $affect
-foreach ($key in $keys) { $steps += $tests[$key] }
+$steps += $tests[$keys[0]], $tests[$keys[1]]
+$steps += $ema
+$steps += $tests[$keys[2]], $tests[$keys[3]]
 $steps += $affect
 
 if (-not (Test-Path $sessionsLog)) {
@@ -263,7 +254,6 @@ $row = '{0},{1},{2},{3},{4}' -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'), $id,
 Write-Host ""
 Write-Host "Portuguese study v2 - participant $id, session $Session (order $orderNo of $($orders.Count), from portuguese-study-v2-orders.csv)" -ForegroundColor Cyan
 for ($i = 0; $i -lt $steps.Count; $i++) { Write-Host "  $($i + 1). $($steps[$i].Name)" }
-Write-Host "affectgrid-portuguese: if PEBL asks 'Choose new code / Add Session', click 'Add Session'." -ForegroundColor DarkGray
 
 ## Step $i is next; b moves back one step (type b again to go further back),
 ## e.g. to run a test again whose window was closed by accident. After the last

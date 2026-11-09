@@ -1,0 +1,9 @@
+Affect Grid (European Portuguese - "Grelha Emocional")
+
+Copy of affectgrid-portuguese used in session A of the Portuguese study v2 (run-portuguese-study-v2.bat), so its data are kept apart in affectgrid-portuguese-A/data/.
+
+European Portuguese version of the PEBL Affect Grid. The test always runs in
+Portuguese (translations/affectgrid-portuguese-A.pbl-pt.json), whatever language
+is selected in the launcher.
+
+The Affect Grid is a two-dimensional emotion rating tool that allows participants to rate their current emotional state along two axes: arousal (sleepy to aroused) and valence (unpleasant to pleasant). Participants click on a 9x9 grid to indicate their emotional state, with the position representing the combination of arousal level (vertical axis) and emotional valence (horizontal axis). This single-item measure provides a quick assessment of emotional state that can be used as a baseline measure, repeated during an experiment, or used to track mood changes over time. The grid format allows for nuanced reporting of emotional states ranging from calm/content to anxious/stressed to sad/depressed to excited/happy.
