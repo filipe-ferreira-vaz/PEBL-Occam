@@ -13,6 +13,6 @@ rem              affectgrid-portuguese
 rem   Each counterbalanced test is followed by its survey-<test>.
 rem Orders: counterbalance\portuguese-study-v2-orders.csv (one row per ID, 24 orders per session)
 rem Options: run-portuguese-study-v2.bat -Participant 42 -Session A -Fullscreen
-rem Before each test: Enter = run it, s = skip, q = quit
+rem Before each test: Enter = run it, s = skip, b = back to the previous test, q = quit
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0utils\run-portuguese-study-v2.ps1" %*
 pause

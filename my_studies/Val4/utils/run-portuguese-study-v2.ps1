@@ -45,7 +45,11 @@
 # block of 24 IDs. Every session started is added to
 # counterbalance/portuguese-study-v2-sessions.csv (time, ID, session, order).
 #
-# Before each test: Enter = run it, s = skip it, q = quit.
+# Before each test: Enter = run it, s = skip it, q = quit,
+#   b = go back to the previous test (type b again to go further back), e.g. to
+#   run again a test whose window was closed by accident. After the last test it
+#   waits once more (Enter = finish, b = back). A PEBL test run again under the
+#   same ID asks "Choose new code / Add Session": click "Add Session".
 # A row per PEBL test run is added to logs/launcher-log.csv of the PEBL workspace, if there is one.
 
 param(
@@ -261,19 +265,39 @@ Write-Host "Portuguese study v2 - participant $id, session $Session (order $orde
 for ($i = 0; $i -lt $steps.Count; $i++) { Write-Host "  $($i + 1). $($steps[$i].Name)" }
 Write-Host "affectgrid-portuguese: if PEBL asks 'Choose new code / Add Session', click 'Add Session'." -ForegroundColor DarkGray
 
+## Step $i is next; b moves back one step (type b again to go further back),
+## e.g. to run a test again whose window was closed by accident. After the last
+## step it waits once more, so the last test can be gone back to as well.
 $quit = $false
-for ($i = 0; $i -lt $steps.Count; $i++) {
-  $t = $steps[$i]
+$i = 0
+while ($i -le $steps.Count) {
   Write-Host ""
+  if ($i -eq $steps.Count) {
+    Write-Host "All $($steps.Count) steps done." -ForegroundColor Cyan
+    $answer = $null
+    while ($answer -ne '' -and $answer -ne 'b') {
+      $answer = "$(Read-Host '  Enter = finish, b = back to the previous test')".Trim().ToLower()
+    }
+    if ($answer -eq 'b') { $i--; continue }
+    break
+  }
+  $t = $steps[$i]
   Write-Host "Next ($($i + 1)/$($steps.Count)): $($t.Name)" -ForegroundColor Cyan
   $answer = $null
-  while ($answer -ne '' -and $answer -ne 's' -and $answer -ne 'q') {
-    $answer = "$(Read-Host '  Enter = run it, s = skip, q = quit')".Trim().ToLower()
+  while ($answer -ne '' -and $answer -ne 's' -and $answer -ne 'b' -and $answer -ne 'q') {
+    $answer = "$(Read-Host '  Enter = run it, s = skip, b = back to the previous test, q = quit')".Trim().ToLower()
   }
   if ($answer -eq 'q') { $quit = $true; break }
-  if ($answer -eq 's') { Write-Host '  skipped'; continue }
-  try { Run-Step $t }
-  catch { Write-Host "  $($t.Name) failed: $($_.Exception.Message)" -ForegroundColor Red }
+  if ($answer -eq 'b') {
+    if ($i -eq 0) { Write-Host '  This is the first test.' -ForegroundColor Yellow } else { $i-- }
+    continue
+  }
+  if ($answer -eq 's') { Write-Host '  skipped' }
+  else {
+    try { Run-Step $t }
+    catch { Write-Host "  $($t.Name) failed: $($_.Exception.Message)" -ForegroundColor Red }
+  }
+  $i++
 }
 
 Write-Host ""
