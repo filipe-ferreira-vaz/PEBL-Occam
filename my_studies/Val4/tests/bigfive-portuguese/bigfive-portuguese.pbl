@@ -17,7 +17,7 @@
 define Start(p)
 {
 
-  parpairs <- [["shufflequestions",1],
+  parpairs <- [["shufflequestions",0],
                ["doExt",1],
                ["doAgr",1],
                ["doCon",1],
