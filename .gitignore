@@ -1,3 +1,5 @@
 # Participant data stays on this computer (repo is public).
 # Files already on GitHub (e.g. Occam's data) are not affected.
 my_studies/*/tests/*/data/
+
+my_studies/*/study_results/
