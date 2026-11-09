@@ -143,6 +143,12 @@
       "included": true,
       "test_name": "vsearch-customize-portuguese",
       "test_path": "vsearch-customize-portuguese"
+    },
+    {
+      "display_name": "affectgrid-portuguese",
+      "included": true,
+      "test_name": "affectgrid-portuguese",
+      "test_path": "affectgrid-portuguese"
     }
   ],
   "upload_server_url": "",

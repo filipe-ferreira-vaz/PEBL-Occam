@@ -1,0 +1,13 @@
+{
+"HEADER": "Grelha Emocional",
+"SUBHEADER": "Clique num quadrado que identifique como se está a sentir neste momento",
+"HIGH_SLEEPINESS": "Sonolência",
+"HIGH_AROUSAL": "Alta ativação",
+"PLEASANT_FEELINGS": "Sentimentos agradáveis",
+"UNPLEASANT_FEELINGS": "Sentimentos desagradáveis",
+"DEPRESSION": "depressão",
+"RELAXATION": "relaxamento",
+"STRESS": "stress",
+"EXCITEMENT": "excitação",
+"OK": "OK"
+}
