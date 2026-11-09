@@ -1,5 +1,5 @@
 {
-"INSTRUCTIONS": "Como sou eu?\n\nAbaixo encontram-se um número de características que podem ou não descrevê-lo. Por exemplo, acha que é uma pessoa que gosta de estar com os outros? Por favor, coloque o número que corresponde ao grau em que acredita que a frase o caracteriza, segundo a legenda seguinte. Não há respostas certas nem erradas; responda com sinceridade, de acordo com o seu modo de ser habitual.\n\nPara cada uma das frases responda à questão:\nVejo-me como alguém que…\n\n1. Discordo Totalmente\n2. Discordo Moderadamente\n3. Nem Concordo nem Discordo\n4. Concordo Moderadamente\n5. Concordo Totalmente",
+"INSTRUCTIONS": "Como sou eu?\n\nAbaixo encontram-se um número de características que podem ou não descrevê-lo(a). Por exemplo, acha que é uma pessoa que gosta de estar com os outros? Por favor, coloque o número que corresponde ao grau em que acredita que a frase o caracteriza, segundo a legenda seguinte. Não há respostas certas nem erradas; responda com sinceridade, de acordo com o seu modo de ser habitual.\n\nPara cada uma das frases responda à questão:\nVejo-me como alguém que…\n\n1. Discordo Totalmente\n2. Discordo Moderadamente\n3. Nem Concordo nem Discordo\n4. Concordo Moderadamente\n5. Concordo Totalmente",
 "QUESTION_HEAD": "Vejo-me como alguém que…",
 "LIKERT_1": "Discordo Totalmente",
 "LIKERT_2": "Discordo Moderadamente",
