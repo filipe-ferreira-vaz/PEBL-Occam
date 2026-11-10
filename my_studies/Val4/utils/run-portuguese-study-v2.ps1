@@ -56,6 +56,7 @@
 #   same ID (other than affectgrid) asks "Choose new code / Add Session": click
 #   "Add Session".
 # A row per PEBL test run is added to logs/launcher-log.csv of the PEBL workspace, if there is one.
+# At launch the Windows volume (default playback device) is set to 100% and unmuted.
 
 param(
   [string]$Participant,
@@ -70,6 +71,11 @@ $studyDir    = Split-Path $utilsDir -Parent
 $utf8NoBom   = New-Object System.Text.UTF8Encoding($false)
 $ordersFile  = Join-Path $studyDir 'counterbalance\portuguese-study-v2-orders.csv'
 $sessionsLog = Join-Path $studyDir 'counterbalance\portuguese-study-v2-sessions.csv'
+
+# Windows volume of the default playback device to 100% and unmuted (see set-volume-max.ps1);
+# if that fails the study still runs, with a warning to set the volume by hand
+try { . (Join-Path $utilsDir 'set-volume-max.ps1'); Set-VolumeMax }
+catch { Write-Host "Could not set the Windows volume ($($_.Exception.Message)). Set it to 100% and unmute it by hand." -ForegroundColor Yellow }
 
 # PEBL workspace: first parent of the study with settings/launcher.cfg
 $workspaceDir = Split-Path $studyDir -Parent
