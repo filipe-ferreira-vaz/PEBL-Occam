@@ -10,22 +10,33 @@ rem   Session A: bigfive-portuguese, affectgrid-portuguese-A, vsearch-customize-
 rem              TNT-custom-stimulus-time-portuguese, maze-increasing-difficulty-v1-portuguese
 rem   Session B: affectgrid-portuguese-B, ptrails-pt-portuguese, tol-portuguese
 rem Stroop, Raven, go/no-go and the EMA survey are run outside PEBL: save their results by hand.
+rem Options: save-portuguese-study-v2-results.bat <ID> <A or B>
+rem   gives the ID and session (it then only asks where to save, and does not pause
+rem   at the end); run-portuguese-study-v2 calls it this way when the session ends.
 
 set "STUDY=%~dp0"
 set "TESTS=%STUDY%tests"
+set "ID=%~1"
+set "SESSION=%~2"
+set "NOPAUSE="
+if not "%~1"=="" set "NOPAUSE=1"
+goto check_id
 
 :ask_id
 set "ID="
 set /p "ID=Participant ID (1-300): "
+:check_id
 if not defined ID goto ask_id
 set "ID=%ID: =%"
 if not defined ID goto ask_id
 echo %ID%| findstr /r "^[1-9]$ ^[1-9][0-9]$ ^[1-9][0-9][0-9]$" >nul || (echo   Type a whole number from 1 to 300.& goto ask_id)
 if %ID% GTR 300 (echo   Type a whole number from 1 to 300.& goto ask_id)
+goto check_session
 
 :ask_session
 set "SESSION="
 set /p "SESSION=Session (A or B): "
+:check_session
 if not defined SESSION goto ask_session
 set "SESSION=%SESSION: =%"
 if /i "%SESSION%"=="A" (set "SESSION=A" & goto ask_dest)
@@ -88,4 +99,4 @@ if "%SESSION%"=="B" echo Remember to save the Raven, go/no-go and EMA survey res
 
 :end
 echo.
-pause
+if not defined NOPAUSE pause

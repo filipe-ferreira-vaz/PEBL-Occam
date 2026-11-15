@@ -57,6 +57,9 @@
 #   "Add Session".
 # A row per PEBL test run is added to logs/launcher-log.csv of the PEBL workspace, if there is one.
 # At launch the Windows volume (default playback device) is set to 100% and unmuted.
+# At the end (also after q = quit) it asks whether to save the results; y runs
+# save-portuguese-study-v2-results.bat with this ID and session (it then asks
+# only where to save).
 
 param(
   [string]$Participant,
@@ -298,3 +301,14 @@ while ($i -le $steps.Count) {
 
 Write-Host ""
 if ($quit) { Write-Host "Stopped before: $($steps[$i].Name)" -ForegroundColor Yellow } else { Write-Host "Session $Session done." -ForegroundColor Green }
+
+# Save the results of this session now?
+$answer = $null
+while ($answer -ne 'y' -and $answer -ne 'n') {
+  $answer = "$(Read-Host "Save the results of participant $id, session $Session now? (y/n)")".Trim().ToLower()
+}
+if ($answer -eq 'y') {
+  $saveBat = Join-Path $studyDir 'save-portuguese-study-v2-results.bat'
+  if (Test-Path $saveBat) { & $saveBat $id $Session }
+  else { Write-Host "Not found: $saveBat - run it by hand." -ForegroundColor Red }
+}
