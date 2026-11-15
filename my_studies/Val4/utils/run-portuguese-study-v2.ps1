@@ -30,6 +30,9 @@
 #   EMA survey = Survey Ecological Momentary Assessment (external, not PEBL):
 #   test 1, test 2, EMA survey, test 3, test 4.
 # For an external test the script only says what to do and waits for Enter.
+# Raven matrices beeps like the PEBL tests (1000 Hz, 50 ms) when it starts (Enter = run it)
+# and when Enter is pressed at its end; beeps are logged to
+# counterbalance\portuguese-study-v2-external-beeps.csv.
 #
 # affectgrid-portuguese-A and -B are copies of affectgrid-portuguese, one per
 # session, so their data are kept in separate folders. Each runs twice per
@@ -192,19 +195,58 @@ function Write-Params([string]$folder, [string]$json) {
   [IO.File]::WriteAllText((Join-Path $dir 'portuguese-study.par.json'), $json, $utf8NoBom)
 }
 
-# A test done outside PEBL: say what to do and wait until it is finished
-function Run-External([string]$what) {
+# Start/end beep for external tests: the same tone as the PEBL tests' BeepsStart()/BeepsEnd()
+# (utils/beeps.pbl: 1000 Hz, 50 ms, amplitude 0.8, 44.1 kHz 16-bit mono), built in memory.
+# Each beep is logged to counterbalance\portuguese-study-v2-external-beeps.csv
+$beepsLog = Join-Path $studyDir 'counterbalance\portuguese-study-v2-external-beeps.csv'
+$beepPlayer = $null
+function Get-BeepPlayer {
+  if ($script:beepPlayer) { return $script:beepPlayer }
+  $sr = 44100; $f = 1000; $d = 50; $a = 0.8
+  $n = [int]($sr * $d / 1000)
+  $ms = New-Object IO.MemoryStream; $w = New-Object IO.BinaryWriter($ms)
+  $w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36 + $n * 2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))
+  $w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr * 2)); $w.Write([int16]2); $w.Write([int16]16)
+  $w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n * 2))
+  for ($i = 0; $i -lt $n; $i++) { $w.Write([int16][Math]::Round(32767 * $a * [Math]::Sin(2 * [Math]::PI * $f * $i / $sr))) }
+  $w.Flush(); $ms.Position = 0
+  $p = New-Object System.Media.SoundPlayer($ms)
+  $p.Load()
+  $script:beepPlayer = $p
+  return $p
+}
+function Play-Beep([string]$test, [string]$event) {
+  try {
+    $p = Get-BeepPlayer
+    $now = Get-Date
+    $p.PlaySync()
+    if (-not (Test-Path $beepsLog)) {
+      [IO.File]::WriteAllText($beepsLog, "participant,session,test,event,freq,durationms,amplitude,clocktime`r`n", $utf8NoBom)
+    }
+    $row = '{0},{1},{2},{3},1000,50,0.8,{4}' -f $id, $Session, $test, $event, $now.ToString('yyyy-MM-dd HH:mm:ss.fff')
+    [IO.File]::AppendAllText($beepsLog, "$row`r`n", $utf8NoBom)
+  } catch {
+    Write-Host "  Could not play the $event beep ($($_.Exception.Message))." -ForegroundColor Yellow
+  }
+}
+
+# A test done outside PEBL: say what to do and wait until it is finished.
+# With a beepTest name (Raven), a beep plays when it starts and again when Enter is pressed at the end.
+function Run-External([string]$what, [string]$beepTest = $null) {
+  if ($beepTest) { Play-Beep $beepTest 'beep_start' }
   Write-Host "  Do the $what now, outside PEBL." -ForegroundColor Magenta
   $null = Read-Host '  Press Enter when it is finished'
+  if ($beepTest) { Play-Beep $beepTest 'beep_end' }
 }
 
 # One step of the session: a PEBL test (Folder, Pbl, optional Params json) or an
-# external test (External = what to tell the experimenter)
-function Step([string]$name, [string]$folder, [string]$pblName, [string]$params = $null, [string]$external = $null) {
-  [pscustomobject]@{ Name = $name; Folder = $folder; Pbl = $pblName; Params = $params; External = $external }
+# external test (External = what to tell the experimenter; BeepTest = name to log
+# start/end beeps under, or $null for no beeps)
+function Step([string]$name, [string]$folder, [string]$pblName, [string]$params = $null, [string]$external = $null, [string]$beepTest = $null) {
+  [pscustomobject]@{ Name = $name; Folder = $folder; Pbl = $pblName; Params = $params; External = $external; BeepTest = $beepTest }
 }
 function Run-Step($t) {
-  if ($t.External) { Run-External $t.External; return }
+  if ($t.External) { Run-External $t.External $t.BeepTest; return }
   if ($t.Params) {
     Write-Params $t.Folder $t.Params
     Run-Test $t.Folder $t.Pbl 'portuguese-study.par.json'
@@ -224,7 +266,7 @@ $tests = @{
   maze    = Step 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese'
   stroop  = Step 'stroop (EXTERNAL - not PEBL)' '' '' $null 'Stroop test'
   ptrails = Step 'ptrails-pt-portuguese' 'ptrails-pt-portuguese' 'ptrails-pt-portuguese'
-  raven   = Step 'raven matrices (EXTERNAL - not PEBL)' '' '' $null 'Raven matrices'
+  raven   = Step 'raven matrices (EXTERNAL - not PEBL)' '' '' $null 'Raven matrices' 'raven'
   tol     = Step 'tol-portuguese/TOL-portuguese' 'tol-portuguese' 'TOL-portuguese'
   gonogo  = Step 'auditory go/no-go (EXTERNAL - not PEBL)' '' '' $null 'auditory go/no-go test'
 }
