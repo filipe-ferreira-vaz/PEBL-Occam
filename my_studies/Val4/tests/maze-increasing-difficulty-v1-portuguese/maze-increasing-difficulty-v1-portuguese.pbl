@@ -270,11 +270,36 @@ define DoMazeTrial(maze)
   header.justify <- "CENTER"
   MoveCorner(header,10,10)
 #  header <- EasyLabel(inst1, gVideoWidth/2,50,gWin,30)
+  ## Time limits (test mazes only, not the practice maze):
+  ##   planning 150 s; solving 60 s for the 15x15 mazes, 90 s for the 20x20 mazes.
+  planLimit <- 0
+  solveLimit <- 0
+  if(maze.order > 0)
+  {
+    planLimit <- 150000
+    if(maze.width >= 20)
+    {
+      solveLimit <- 90000
+    } else {
+      solveLimit <- 60000
+    }
+  }
+
   timepreview0 <- GetTime()
   Draw()
   if(gParams.allowplanning)
   {
-     WaitForKeyPress(" ")
+     if(planLimit > 0)
+     {
+       WaitForListKeyPressWithTimeout([" "], planLimit)
+       if(GetTime() - timepreview0 >= planLimit)
+       {
+         LSLMarker("maze_planning_timeout")
+         FilePrint(gLogFile,ConcatenateList([gSubNum,maze,"PLANTIMEOUT","","","",GetTime()],","))
+       }
+     } else {
+       WaitForKeyPress(" ")
+     }
   }
 
   if(gPreviewtime > 0)
@@ -296,6 +321,11 @@ define DoMazeTrial(maze)
   LSLMarker("maze_solving_start")
   Draw()
   header.text <- gStrings.solving
+  planOver <- 0
+  if(maze.order > 0)
+  {
+    planOver <- PlanningOverLabel(maze)
+  }
   cont <- 1
   pos <- maze.start
   success <- 0
@@ -307,8 +337,29 @@ define DoMazeTrial(maze)
     drawnpath <- DrawPath(path,maze,gWin,MakeColor("cadetblue4"))
     Draw()
 
-    resp <- GetResponse(pos,maze)
+    timeleft <- 0
+    if(solveLimit > 0)
+    {
+      timeleft <- time0 + solveLimit - GetTime()
+    }
+    if(solveLimit > 0 and timeleft <= 0)
+    {
+      resp <- ["T",0]
+    } else {
+      resp <- GetResponse(pos,maze,timeleft)
+    }
     curtime <- GetTime()
+    if(First(resp) == "T")
+     {
+      ##solving time is over: end this maze (not solved)
+      cont <- 0
+      LSLMarker("maze_solving_timeout")
+      FilePrint(gLogFile,ConcatenateList([gSubNum,maze,"SOLVETIMEOUT",pos,"","",curtime],","))
+      if(firstresp==0)
+      {
+        firstresp <- curtime
+      }
+     } else {
     LSLMarker("move_" + Second(resp))
     if(firstresp==0)
     {
@@ -335,6 +386,7 @@ define DoMazeTrial(maze)
    }
     Draw()
     FilePrint(gLogFile,ConcatenateList([gSubNum,maze,"MOVE",pos,First(xy),Second(xy),curtime],","))
+     }
   }
 
   moveseq <- path
@@ -368,7 +420,11 @@ FilePrint(gFileOut,ConcatenateList(
  RemoveObjects(drawnpath,gWin)
  RemoveObjects(maze.lines,gWin)
  RemoveObject(me,gWin)
- 
+ if(not IsNumber(planOver))
+ {
+   RemoveObject(planOver,gWin)
+ }
+
   return out
 
 }
@@ -530,7 +586,33 @@ define IndexToRC(index,maze)
 }
 
 
-define GetResponse(rc,maze)
+## "Acabou a fase de planeamento" at the top of the screen, in the free space
+## between the header text (FASE DE RESOLUCAO...) and the top of the maze.
+define PlanningOverLabel(maze)
+{
+  fontsize <- 22
+  headfont <- MakeFont(gPEBLBaseFont,0,22,MakeColor("white"),MakeColor("black"),0)
+  probe <- MakeLabel(gStrings.solving,headfont)
+  lines <- Ceiling(probe.width/(gVideoWidth-60))
+  textBottom <- 10 + lines*probe.height + 2
+
+  font <- MakeFont(gPEBLBaseFont,0,fontsize,MakeColor("yellow"),MakeColor("black"),0)
+  lab <- MakeLabel("Acabou a fase de planeamento",font)
+  space <- maze.top - 4 - textBottom
+  if(lab.height > space and space > 0)
+  {
+    ##small screen: smaller text so it fits above the maze
+    fontsize <- Max([12, Floor(fontsize*space/lab.height)])
+    font <- MakeFont(gPEBLBaseFont,0,fontsize,MakeColor("yellow"),MakeColor("black"),0)
+    lab <- MakeLabel("Acabou a fase de planeamento",font)
+  }
+  AddObject(lab,gWin)
+  Move(lab,gVideoWidth/2,textBottom + lab.height/2)
+  return lab
+}
+
+
+define GetResponse(rc,maze,timeout:0)
 {
 
   ##move these out of the way so they don't
@@ -600,7 +682,16 @@ define GetResponse(rc,maze)
 
    } else{
 
-   resp <- WaitForListKeyPress(["<left>","<right>","<up>","<down>","X"])
+   if(timeout > 0)
+   {
+     resp <- WaitForListKeyPressWithTimeout(["<left>","<right>","<up>","<down>","X"],timeout)
+     if(GetTime() - time0 >= timeout)
+     {
+       resp <- "<timeout>"
+     }
+   } else {
+     resp <- WaitForListKeyPress(["<left>","<right>","<up>","<down>","X"])
+   }
 
    }
 
@@ -630,6 +721,11 @@ define GetResponse(rc,maze)
     if(resp=="<down>" and Nth(maze.south,index)==0)
    {
      ret <- South(rc,maze)
+   }
+
+   if(resp=="<timeout>")
+   {
+     ret <- "T"   ##solving time is over
    }
 
  return [ret, (time2-time0)]
