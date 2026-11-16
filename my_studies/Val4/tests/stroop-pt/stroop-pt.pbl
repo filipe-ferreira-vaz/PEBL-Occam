@@ -1,0 +1,1418 @@
+ #######################################################
+ ##
+ ## Color Stroop Task -- Portuguese study version (stroop-pt)
+ ##
+ ## Based on the PEBL Color Stroop Task, Version 1.0
+ ## (c) 2011-2026 Shane T. Mueller, smueller at obereed dot net
+ ## (my_studies/Val3/tests/stroop-color/color-stroop.pbl)
+ ##
+ ## Changes from the original:
+ ##  - white background; ink colors rosa (255,182,193), azul (0,127,255),
+ ##    verde (130,211,5) and preto (0,0,0)
+ ##  - two versions, chosen with the launch parameter "version":
+ ##    A: the 112 words of the paper Stroop sheet (all incongruent; read
+ ##       column by column, top to bottom), in two blocks:
+ ##         block 1 "bloco de leitura":  respond to the WORD (ignore the ink)
+ ##         block 2 "bloco de nomeacao": respond to the INK (ignore the word)
+ ##       One practice before the two blocks (none between them), 12 trials
+ ##       in a fixed order: 4 x XXXXX in the inks verde, azul, preto, rosa
+ ##       (respond to the ink), then 4 reading trials (respond to the word):
+ ##       ROSA/preto ink, PRETO/azul, VERDE/rosa, AZUL/verde, then the same
+ ##       4 words as naming trials (respond to the ink).
+ ##    B: one naming block (respond to the ink) of 112 trials, roughly a
+ ##       third each congruent, incongruent and neutral ("XXXXX"): 36 / 40 / 36,
+ ##       in one fixed order (the same for every participant), generated once
+ ##       with these rules: no word and no ink repeated on consecutive trials,
+ ##       the same condition at most 3 in a row; every ink 28 times; congruent
+ ##       and neutral 9 times per ink, incongruent word/ink pairs 3-4 times.
+ ##  - no time limit per trial; each task block ends after blockTimeLimit ms
+ ##    (default 120000 = 120 s) or when its trials are done. The practice has
+ ##    no time limit. The time limit is recorded in all result files.
+ ##  - responses with the keys D, F, J, K; which color goes with which key is
+ ##    counterbalanced between participants, read from
+ ##    ../../counterbalance/stroop-pt-keys.csv (participant,D,F,J,K); the
+ ##    same mapping is used in both versions and both blocks (in the reading
+ ##    block, the key of a color is pressed when the word names that color)
+ ##  - practice with feedback (correct / incorrect); afterwards a screen to
+ ##    repeat the practice or start the task. No feedback in the task.
+ ##  - fixationTime 0 = no fixation cross; isi = blank screen after each trial
+ ##  - keyboard responses only (the audio mode of the original is removed)
+ ##  - start/end beeps (beeps.pbl), LSL markers
+ ##  - instructions in European Portuguese (marked [NOT FINAL])
+ #######################################################
+
+define Start(p)
+{
+   ## Initialize upload system (works for both online and native)
+   InitializeUpload()
+
+   gScriptName <- "Color stroop task (stroop-pt)"
+
+   parpairs <- [["version","A"],          ## A = paper-sheet order, reading + naming blocks; B = 112 fixed mixed trials, naming block
+                ["stimsize",60],          ## Stimulus font size
+                ["fixationTime",1000],    ## Time of the fixation cross (ms); 0 = no fixation cross
+                ["isi",0],                ## Inter-stimulus interval: blank screen after each trial (ms)
+                ["blockTimeLimit",120000],## Time limit of each task block (ms); 0 = no limit. Not used in the practice.
+                ["keyfile","../../counterbalance/stroop-pt-keys.csv"],  ## Key-color counterbalancing file
+                ["keycolors",""]          ## Override: colors for D F J K, e.g. "rosa azul verde preto"
+               ]
+
+   gParams <- CreateParameters(parpairs,gParamFile)
+   gStimSize <- gParams.stimsize
+   gLanguage <- "pt"   ## Portuguese version: always European Portuguese
+   gVersion <- Uppercase(StripSpace(gParams.version + ""))
+   if(gVersion != "A" and gVersion != "B")
+   {
+     SignalFatalError("stroop-pt: the parameter version must be A or B, got: " + gParams.version)
+   }
+
+   Initialize()
+   InitializeLSL(gWin)  ## Initialize LSL outlet if --lsl flag was used
+   BeepsStart()  ## auto-added by setup-study.bat
+
+   if(gSubNum +""=="0")
+   {
+     gSubNum <- GetSubNum(gWin)
+   }
+
+   GetStrings(gLanguage)
+   SetKeyMapping()
+
+   fileheader <- "subnum,version,block,blocktype,trial,cond,stimword,wordid,inkid,inkname,keymap,keysource,targetid,targetname,correctkey,responded,response,respcolorid,respcolorname,correct,abstime,rt,randomerror,conflicterror,fixationtime,isi,blocktimelimit,blocktime,timeup"
+
+   gFileOut <- GetNewDataFile(gSubNum,gWin,"stroop-pt","csv",fileheader)
+   gSumFileOut <- GetNewDataFile(gSubNum,gWin,"stroop-pt-summary","txt","")
+
+   gPooledFileOut <- FileOpenAppend("data/stroop-pt-pooled.csv")
+   gLog <- FileOpenAppend("data/stroop-pt-log.csv")
+   ## (re)print the header if the file is new or was written by an older version
+   if(not IsMember(fileheader, FileReadList("data/stroop-pt-pooled.csv")))
+   {
+     FilePrint(gPooledFileOut, fileheader)
+   }
+
+   FilePrint(gLog, gSubNum + "," + gLanguage + "," + TimeStamp()+",STROOP-PT-"+gVersion+","+gKeyMapCode+",STARTED")
+
+   gBlockStart <- GetTime()
+   gBlockDeadline <- 0
+
+   #################################
+   ## Instructions, then the block(s)
+   ShowText(Txt("INSTRUCTIONS_" + gVersion))
+
+   if(gVersion == "A")
+   {
+     ## one practice (fixed 12 trials, mixed rules), then the two blocks
+     prounds <- RunPracticeA()
+     res1 <- DoBlock(1, 2, "leitura", VersionATrials(), "READINGINTRO", 0, prounds)
+     ShowText(Txt("BLOCKDONE"))
+     res2 <- DoBlock(2, 2, "nomeacao", VersionATrials(), "NAMINGINTRO", 0, 0)
+   } else {
+     res1 <- DoBlock(1, 1, "nomeacao", VersionBTrials(), "", 1, 0)
+     res2 <- Repeat("NA", 16)
+   }
+
+   ## Finalize LSL
+   BeepsEnd()  ## auto-added by setup-study.bat
+   FinalizeLSL()
+
+   #################################
+   ## Summary
+   FilePrint(gSumFileOut,"------------------------------------------")
+   FilePrint(gSumFileOut,"PEBL Color Stroop Task - Portuguese study version (stroop-pt)")
+   FilePrint(gSumFileOut,"Based on the PEBL Color Stroop Task, Shane T. Mueller")
+   FilePrint(gSumFileOut, GetPEBLVersion())
+   FilePrint(gSumFileOut,"------------------------------------------")
+   FilePrint(gSumFileOut, "Subject code:     "+gSubNum)
+   FilePrint(gSumFileOut, "Time:             "+TimeStamp())
+   FilePrint(gSumFileOut, "Version:          "+gVersion)
+   FilePrint(gSumFileOut, "Keys:             "+gKeyMapCode+" (from "+gKeySource+")")
+   FilePrint(gSumFileOut, "Fixation:         "+gParams.fixationtime+" ms")
+   FilePrint(gSumFileOut, "ISI:              "+gParams.isi+" ms")
+   FilePrint(gSumFileOut, "Trial time limit: none")
+   FilePrint(gSumFileOut, "Block time limit: "+gParams.blocktimelimit+" ms (0 = none)")
+   FilePrint(gSumFileOut,"------------------------------------------")
+   PrintBlockSummary(1, res1)
+   if(gVersion == "A")
+   {
+     PrintBlockSummary(2, res2)
+   }
+   FilePrint(gSumFileOut,"RT and accuracy count only the completed trials (not the one cut off by the time limit).")
+   FilePrint(gSumFileOut,"Conflict errors: responded with the color of the distractor (the ink in the reading block, the word in the naming block).")
+
+   sumheader <- "sub,timestamp,version,keymap,keysource,fixationtime,isi,blocktimelimit"
+   loop(b, ["b1","b2"])
+   {
+     loop(col, ["type","practicerounds","trials","time","timeup","errors","conflicterrors","randomerrors","meanrt","acc","rtC","rtI","rtN","accC","accI","accN"])
+     {
+       sumheader <- sumheader + "," + b + "_" + col
+     }
+   }
+   filesum <- FileOpenAppend("data/stroop-pt-sumall.csv")
+   if(not IsMember(sumheader, FileReadList("data/stroop-pt-sumall.csv")))
+   {
+     FilePrint(filesum, sumheader)
+   }
+   FilePrint(filesum, gSubNum + "," + TimeStamp() + "," + gVersion + "," + gKeyMapCode + "," + gKeySource + "," +
+                      gParams.fixationtime + "," + gParams.isi + "," + gParams.blocktimelimit + "," +
+                      ConcatenateList(res1, ",") + "," + ConcatenateList(res2, ","))
+
+   FilePrint(gLog, gSubNum + "," + gLanguage + "," + TimeStamp()+",STROOP-PT-"+gVersion+","+gKeyMapCode+",ENDED")
+
+   ## Close and upload data files
+   FileClose(gFileOut)
+   FileClose(gSumFileOut)
+   FileClose(filesum)
+
+   UploadFile(gSubNum, gFileOut.filename)
+   UploadFile(gSubNum, gSumFileOut.filename)
+   UploadFile(gSubNum, filesum.filename)
+
+   HideTrialScreen()
+   MessageBox(Txt("EXIT"),gWin)
+}
+
+###################################################
+## One block: intro text, practice (repeatable; only if runpractice is 1,
+## otherwise rounds = practice rounds done before, for the results), start
+## text, task trials.
+## mode: "leitura" (respond to the word) or "nomeacao" (respond to the ink)
+## Returns [type, practice rounds, trials completed, duration (ms), timeup,
+##          errors, conflict errors, random errors, mean RT, accuracy,
+##          RT C, RT I, RT N, accuracy C, accuracy I, accuracy N]
+define DoBlock(blocknum, totalblocks, mode, trials, introkey, runpractice, rounds)
+{
+   gMode <- mode
+   gFooter2Text <- Txt("FOOTER2_" + Uppercase(mode))
+   if(introkey != "")
+   {
+     ShowText(Txt(introkey))
+   }
+
+   if(runpractice)
+   {
+     rounds <- RunPractice(blocknum, mode)
+   }
+
+   ShowText(Txt("TASKSTART"))
+
+   if(gVersion == "A")
+   {
+     gHeader.text <- Txt("HEADER_" + Uppercase(mode))
+   } else {
+     gHeader.text <- Txt("TESTHEADERTEXT")
+   }
+   Show(gHeader)
+   gBlock <- blocknum
+   DoKeyPractice(gKeyReminderText)
+
+   LSLMarker("block_" + blocknum + "_" + mode + "_start")
+   res <- RunTaskBlock(trials, blocknum, totalblocks)
+   LSLMarker("block_" + blocknum + "_" + mode + "_end")
+   HideTrialScreen()
+
+   return(Merge([mode, rounds], res))
+}
+
+## Practice with feedback for the given response mode; afterwards the
+## participant chooses to repeat it (as often as wanted) or start the block.
+## Returns the number of practice rounds done.
+define RunPractice(blocknum, mode)
+{
+   base <- PracticeTrials()
+   practiceround <- 1
+   repeatPractice <- 1
+   while(repeatPractice)
+   {
+     gBlock <- "practice" + blocknum + "-" + practiceround
+     gHeader.text <- Txt("PRACTICEHEADERTEXT")
+     Show(gHeader)
+     Draw()
+     DoKeyPractice(gKeyPracticeText)
+
+     ## 1st round in the preset order, repeats in a new (constrained) random order
+     if(practiceround == 1)
+     {
+       blockTrials <- base
+     } else {
+       blockTrials <- OrderTrials(base, mode)
+     }
+
+     ## counters updated by DoTrial (practice values are not used in the summaries;
+     ## RunTaskBlock resets them for the task)
+     gErr  <- []; gRT   <- []; gCond <- []
+     gErrors           <- 0
+     gConflictErrors   <- 0
+     gRandomErrors     <- 0
+
+     gBlockStart <- GetTime()
+     gBlockDeadline <- 0   ## no time limit in the practice
+     LSLMarker("block_practice_" + mode + "_start")
+     gTrial <- 1
+     ncorrect <- 0
+     totalTrials <- Length(blockTrials)
+     loop(trial, blockTrials)
+     {
+       gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", gTrial], ["<NUMTRIALS>", totalTrials]])
+       Draw()
+       DoTrial(trial, gParams.fixationtime, 1)
+       ncorrect <- ncorrect + gLastCorrect
+       gTrial <- gTrial + 1
+     }
+     LSLMarker("block_practice_" + mode + "_end")
+
+     HideTrialScreen()
+     choiceText <- SubstituteStrings(gStrings.practicedone,
+                     [["<CORRECT>", ncorrect], ["<TOTAL>", totalTrials]])
+     repeatPractice <- PracticeChoice(choiceText, gWin, 30)
+     ShowCursor(0)
+     practiceround <- practiceround + 1
+   }
+   return(practiceround - 1)
+}
+
+## Version A practice (before both blocks): the 3 parts of PracticeAParts,
+## each after its own instruction screen, with feedback. Afterwards the
+## participant chooses to repeat it (same trials, same order) or start the
+## task. Returns the number of practice rounds done.
+define RunPracticeA()
+{
+   parts <- PracticeAParts()
+   totalTrials <- 0
+   loop(part, parts)
+   {
+     totalTrials <- totalTrials + Length(Third(part))
+   }
+   practiceround <- 1
+   repeatPractice <- 1
+   while(repeatPractice)
+   {
+     gBlock <- "practice-" + practiceround
+     gErr  <- []; gRT   <- []; gCond <- []
+     gErrors           <- 0
+     gConflictErrors   <- 0
+     gRandomErrors     <- 0
+     gBlockStart <- GetTime()
+     gBlockDeadline <- 0   ## no time limit in the practice
+
+     ## the key-learning screen shows the footer of the first part
+     gMode <- Second(First(parts))
+     gFooter2Text <- Txt("FOOTER2_" + Uppercase(gMode))
+     gHeader.text <- Txt("PRACTICEHEADERTEXT")
+     Show(gHeader)
+     Draw()
+     DoKeyPractice(gKeyPracticeText)
+
+     LSLMarker("block_practice_start")
+     gTrial <- 1
+     ncorrect <- 0
+     loop(part, parts)
+     {
+       gMode <- Second(part)
+       gFooter2Text <- Txt("FOOTER2_" + Uppercase(gMode))
+       ShowText(Txt(First(part)))
+       gHeader.text <- Txt("PRACTICEHEADERTEXT")
+       Show(gHeader)
+       loop(trial, Third(part))
+       {
+         gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", gTrial], ["<NUMTRIALS>", totalTrials]])
+         Draw()
+         DoTrial(trial, gParams.fixationtime, 1)
+         ncorrect <- ncorrect + gLastCorrect
+         gTrial <- gTrial + 1
+       }
+     }
+     LSLMarker("block_practice_end")
+
+     HideTrialScreen()
+     choiceText <- SubstituteStrings(gStrings.practicedone,
+                     [["<CORRECT>", ncorrect], ["<TOTAL>", totalTrials]])
+     repeatPractice <- PracticeChoice(choiceText, gWin, 30)
+     ShowCursor(0)
+     practiceround <- practiceround + 1
+   }
+   return(practiceround - 1)
+}
+
+###################################################
+## Task trials of one block: runs until all trials are done or the block time
+## limit (gParams.blocktimelimit, from the start of the block) runs out.
+## Returns [trials completed, duration (ms), timeup, errors, conflict errors,
+##          random errors, mean RT, accuracy, RT C/I/N, accuracy C/I/N]
+define RunTaskBlock(trials, blocknum, totalblocks)
+{
+   gErr  <- []; gRT   <- []; gCond <- []
+   gErrors           <- 0
+   gConflictErrors   <- 0    ## responded with the distractor's color
+   gRandomErrors     <- 0    ## other errors
+
+   gBlockStart <- GetTime()
+   if(gParams.blocktimelimit > 0)
+   {
+     gBlockDeadline <- gBlockStart + gParams.blocktimelimit
+   } else {
+     gBlockDeadline <- 0
+   }
+   gTrial <- 1
+   completed <- 0
+   timeup <- 0
+   totalTrials <- Length(trials)
+   loop(trial, trials)
+   {
+     if(totalblocks > 1)
+     {
+       gLayout.subheader.text <- SubstituteStrings(gStrings.block_trial_counter, [["<BLOCKNUM>", blocknum], ["<TOTALBLOCKS>", totalblocks], ["<NUM>", gTrial], ["<NUMTRIALS>", totalTrials]])
+     } else {
+       gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", gTrial], ["<NUMTRIALS>", totalTrials]])
+     }
+     Draw()
+     if(DoTrial(trial, gParams.fixationtime, 0))
+     {
+       completed <- completed + 1
+     } else {
+       timeup <- 1
+       break
+     }
+     gTrial <- gTrial + 1
+   }
+   if(timeup)
+   {
+     LSLMarker("block_" + blocknum + "_timeup")
+     duration <- gParams.blocktimelimit
+   } else {
+     duration <- GetTime() - gBlockStart
+   }
+   Hide(gStimLabel)
+   Draw()
+
+   out <- [completed, duration, timeup, gErrors, gConflictErrors, gRandomErrors,
+           ListMean(gRT), ListMean(gErr)]
+   loop(c, ["C","I","N"])
+   {
+     out <- Append(out, CondMean(gRT, gCond, c))
+   }
+   loop(c, ["C","I","N"])
+   {
+     out <- Append(out, CondMean(gErr, gCond, c))
+   }
+   return(out)
+}
+
+## Milliseconds left in the current block (a large number when there is no limit)
+define BlockTimeLeft()
+{
+   if(gBlockDeadline > 0)
+   {
+     left <- gBlockDeadline - GetTime()
+   } else {
+     left <- 999999999
+   }
+   return(left)
+}
+
+###################################################
+## One trial. stim = [condition, word id, ink id]
+## gMode "leitura": the correct response is the word; "nomeacao": the ink.
+## practice = 1: feedback after the response; 0: no feedback
+## No time limit for the response; in the task blocks the trial is cut off
+## when the block time limit runs out. Returns 1 if the trial was completed,
+## 0 if the block time ran out (that trial is recorded with timeup = 1 and
+## left out of the summaries). Sets gLastCorrect (1/0).
+define DoTrial(stim, fixationtime, practice)
+{
+   cond   <- First(stim)
+   wordid <- Second(stim)
+   ink    <- Third(stim)
+   word   <- Nth(gWordNames, wordid)
+   if(gMode == "leitura")
+   {
+     target <- wordid
+     distractor <- ink
+   } else {
+     target <- ink
+     distractor <- wordid   ## 5 (XXXXX) = no distractor color
+   }
+   gLastCorrect <- 0
+
+   SetAdaptiveLabel(gResponseInstruction, gFooter1Text, gVideoWidth - 40)
+   Show(gResponseInstruction)
+   gLayout.footer.text <- gFooter2Text
+   Show(gLayout.footer)
+
+   ## Fixation cross (skipped entirely when fixationtime is 0)
+   if(fixationtime > 0)
+   {
+     gStimLabel.font <- gStimFont
+     gStimLabel.text <- "+"
+     Show(gStimLabel)
+     Draw()
+     Wait(Max([1, Min([fixationtime, BlockTimeLeft()])]))
+   }
+
+   ## If the block time ran out during the fixation cross, the word is not
+   ## shown and nothing is recorded (completed stays 0).
+   completed <- 0
+   if(BlockTimeLeft() > 0)
+   {
+     Show(gStimLabel)
+     gStimLabel.text <- word
+     gStimLabel.font <- Nth(gFonts, ink)
+     Draw()
+     time1 <- GetTime()
+     LSLMarker("stim_" + gBlock + "_" + gTrial + "_" + cond)
+
+     if(gBlockDeadline > 0)
+     {
+       resp <- WaitForListKeyPressWithTimeout(gKeys, Max([1, BlockTimeLeft()]), 1)
+     } else {
+       resp <- WaitForListKeyPress(gKeys)
+     }
+     time2 <- GetTime()
+     rt <- time2 - time1
+
+     correctkey <- Nth(gKeyLabels, Nth(gColorKey, target))
+     timeup <- resp == "<timeout>"
+     if(timeup)
+     {
+       responded <- 0
+       corr <- "NA"
+       respkey <- "NA"
+       respcolid <- 0
+       respcol <- "NA"
+       randerror <- "NA"
+       conferror <- "NA"
+     } else {
+       responded <- 1
+       keyidx <- KeyIndex(resp)
+       respkey <- Nth(gKeyLabels, keyidx)
+       respcolid <- Nth(gKeyColor, keyidx)
+       respcol <- Nth(gColorNames, respcolid)
+       corr <- respcolid == target
+       gLastCorrect <- corr
+
+       if(corr)
+       {
+         randerror <- 0
+         conferror <- 0
+       } else {
+         conferror <- distractor == respcolid
+         randerror <- 1 - conferror
+       }
+       gErrors <- gErrors + (1-corr)
+       gConflictErrors <- gConflictErrors + conferror
+       gRandomErrors <- gRandomErrors + randerror
+     }
+
+     ## Feedback only in the practice
+     if(practice)
+     {
+       gStimLabel.font <- gStimFont
+       if(corr)
+       {
+         gStimLabel.text <- Txt("CORRECT")
+       } else {
+         gStimLabel.text <- Txt("INCORRECT")
+       }
+       Draw()
+       Wait(500)
+     }
+
+     Hide(gStimLabel)
+     Draw()
+
+     if(gBlockDeadline > 0)
+     {
+       blocklimit <- gParams.blocktimelimit
+     } else {
+       blocklimit <- 0
+     }
+
+     out <- gSubNum + "," + gVersion + "," + gBlock + "," + gMode + "," + gTrial + "," + cond + "," + word + "," + wordid + "," +
+            ink + "," + Nth(gColorNames, ink) + "," + gKeyMapCode + "," + gKeySource + "," +
+            target + "," + Nth(gColorNames, target) + "," +
+            correctkey + "," + responded + "," + respkey + "," + respcolid + "," + respcol + "," +
+            corr + "," + time1 + "," + rt + "," + randerror + "," + conferror + "," +
+            fixationtime + "," + gParams.isi + "," + blocklimit + "," + (time1 - gBlockStart) + "," + timeup
+
+     FilePrint(gFileOut,out)
+     FilePrint(gPooledFileOut,out)
+
+     if(not timeup)
+     {
+       completed <- 1
+       gErr <- Append(gErr,corr)
+       gRT  <- Append(gRT, rt)
+       gCond<- Append(gCond,cond)
+
+       ## Inter-stimulus interval: blank screen before the next fixation cross
+       ## (cut short if the block time runs out)
+       if(gParams.isi > 0)
+       {
+         Wait(Max([1, Min([gParams.isi, BlockTimeLeft()])]))
+       }
+     }
+   }
+   return(completed)
+}
+
+## Mean of a list ("NA" if empty)
+define ListMean(vals)
+{
+   out <- "NA"
+   if(Length(vals) > 0)
+   {
+     out <- Sum(vals) / Length(vals)
+   }
+   return(out)
+}
+
+## Mean of the values whose condition is c ("NA" if none)
+define CondMean(vals, conds, c)
+{
+   sel <- []
+   loop(pair, Transpose([vals, conds]))
+   {
+     if(Second(pair) == c)
+     {
+       sel <- Append(sel, First(pair))
+     }
+   }
+   return(ListMean(sel))
+}
+
+define PrintBlockSummary(blocknum, res)
+{
+   if(Nth(res,5))
+   {
+     ended <- "time limit reached"
+   } else {
+     ended <- "all trials done"
+   }
+   FilePrint(gSumFileOut, "Block " + blocknum + " (" + Nth(res,1) + "), practice rounds: " + Nth(res,2))
+   FilePrint(gSumFileOut, "  Trials completed: " + Nth(res,3) + " in " + Nth(res,4) + " ms (" + ended + ")")
+   FilePrint(gSumFileOut, "  Errors: " + Nth(res,6) + " (conflict " + Nth(res,7) + ", random " + Nth(res,8) + ")")
+   FilePrint(gSumFileOut, "  Mean RT: " + Nth(res,9) + " ms   Accuracy: " + Nth(res,10))
+   FilePrint(gSumFileOut, "  Cond   RT       Accuracy   ([C]ongruent, [I]ncongruent, [N]eutral)")
+   i <- 1
+   loop(c, ["C","I","N"])
+   {
+     FilePrint(gSumFileOut, "   " + c + "     " + Nth(res, 10+i) + "     " + Nth(res, 13+i))
+     i <- i + 1
+   }
+   FilePrint(gSumFileOut,"------------------------------------------")
+}
+
+## Text from the translation file with <KEYSTRING> and <BLOCKTIME> filled in
+define Txt(key)
+{
+   text <- PracticeString(key, key)
+   return(SubstituteStrings(text, [["<KEYSTRING>", gKeyString],
+                                   ["<BLOCKTIME>", Round(gParams.blocktimelimit / 1000)]]))
+}
+
+## Full-screen text, any key continues
+define ShowText(text)
+{
+   HideTrialScreen()
+   gInstructions.text <- text
+   Show(gInstructions)
+   Draw()
+   WaitForAnyKeyPress()
+   Hide(gInstructions)
+   Draw()
+}
+
+define HideTrialScreen()
+{
+   Hide(gHeader)
+   Hide(gLayout.footer)
+   Hide(gResponseInstruction)
+   Hide(gStimLabel)
+   gLayout.subheader.text <- ""
+   Draw()
+}
+
+## index (1-4) of a pressed key in gKeys
+define KeyIndex(resp)
+{
+   idx <- 0
+   i <- 1
+   loop(k, gKeys)
+   {
+     if(Lowercase(resp+"") == k)
+     {
+       idx <- i
+     }
+     i <- i + 1
+   }
+   return(idx)
+}
+
+###################################################
+## Key-color mapping for this participant.
+## gKeyColor: color id (1-4) for each key D, F, J, K
+## gColorKey: key index (1-4) for each color id
+define SetKeyMapping()
+{
+   gKeys <- ["d","f","j","k"]
+   gKeyLabels <- ["D","F","J","K"]
+   names <- []
+   gKeySource <- "default"
+
+   if(gParams.keycolors + "" != "")
+   {
+     loop(tok, SplitString(gParams.keycolors + "", " "))
+     {
+       if(StripSpace(tok) != "")
+       {
+         names <- Append(names, StripSpace(tok))
+       }
+     }
+     gKeySource <- "parameter"
+   } elseif(FileExists(gParams.keyfile))
+   {
+     table <- ReadCSV(gParams.keyfile)
+     loop(row, Rest(table))
+     {
+       if(Length(row) >= 5)
+       {
+         if(StripSpace(First(row)+"") == gSubNum + "")
+         {
+           names <- SubList(row, 2, 5)
+           gKeySource <- "file"
+         }
+       }
+     }
+   }
+
+   if(Length(names) == 0)
+   {
+     Print("stroop-pt: no key mapping for participant " + gSubNum + " in " + gParams.keyfile + "; using the default (D=rosa F=azul J=verde K=preto)")
+     names <- ["rosa","azul","verde","preto"]
+     gKeySource <- "default"
+   }
+   if(Length(names) != 4)
+   {
+     SignalFatalError("stroop-pt: the key mapping must list 4 colors (for D F J K), got: " + names)
+   }
+
+   gKeyColor <- []
+   loop(n, names)
+   {
+     gKeyColor <- Append(gKeyColor, ColorIdFromName(n))
+   }
+   gColorKey <- []
+   loop(c, [1,2,3,4])
+   {
+     idx <- 0
+     i <- 1
+     loop(kc, gKeyColor)
+     {
+       if(kc == c)
+       {
+         idx <- i
+       }
+       i <- i + 1
+     }
+     if(idx == 0)
+     {
+       SignalFatalError("stroop-pt: the key mapping must use rosa, azul, verde and preto once each, got: " + names)
+     }
+     gColorKey <- Append(gColorKey, idx)
+   }
+
+   ## "D = rosa   F = azul   ..." (shown on screen), "D=rosa;F=azul;..." (data files)
+   gKeyString <- ""
+   gKeyMapCode <- ""
+   i <- 1
+   loop(kc, gKeyColor)
+   {
+     if(i > 1)
+     {
+       gKeyString <- gKeyString + "     "
+       gKeyMapCode <- gKeyMapCode + ";"
+     }
+     gKeyString <- gKeyString + Nth(gKeyLabels,i) + " = " + Nth(gColorNames,kc)
+     gKeyMapCode <- gKeyMapCode + Nth(gKeyLabels,i) + "=" + Nth(gInternalColorNames,kc)
+     i <- i + 1
+   }
+
+   gFooter1Text      <- Txt("FOOTER1TEXT")
+   gKeyPracticeText  <- Txt("KEYPRACTICE")
+   gKeyReminderText  <- Txt("KEYREMINDER")
+}
+
+## color id from a name in the counterbalancing file / keycolors parameter
+## (starts-with match, so a stray end-of-line character does not matter)
+define ColorIdFromName(name)
+{
+   n <- Lowercase(StripSpace(name + ""))
+   id <- 0
+   i <- 1
+   loop(set, [["rosa","pink"],["azul","blue"],["verde","green"],["preto","black"]])
+   {
+     loop(w, set)
+     {
+       if(StringLength(n) >= StringLength(w))
+       {
+         if(SubString(n, 1, StringLength(w)) == w)
+         {
+           id <- i
+         }
+       }
+     }
+     i <- i + 1
+   }
+   if(id == 0)
+   {
+     SignalFatalError("stroop-pt: unknown color in the key mapping: [" + name + "] (use rosa, azul, verde, preto)")
+   }
+   return(id)
+}
+
+###################################################
+## Trial lists: [condition, word id, ink id]
+## condition: C (congruent), I (incongruent), N (neutral)
+## word id: 1-4 = color names (rosa, azul, verde, preto), 5 = XXXXX
+## ink id:  1-4 = rosa, azul, verde, preto
+
+## Version A: the paper Stroop sheet (4 columns x 28 words, read column by
+## column, top to bottom). Used for both the reading and the naming block.
+define VersionATrials()
+{
+  x <- [["I",2,1],["I",3,2],["I",1,3],["I",4,2],["I",3,1],["I",2,4],["I",1,2],["I",4,1],
+        ["I",1,4],["I",2,3],["I",1,2],["I",4,1],["I",2,4],["I",4,2],["I",1,3],["I",2,1],
+        ["I",3,4],["I",4,3],["I",3,2],["I",4,1],["I",1,4],["I",2,3],["I",1,2],["I",4,3],
+        ["I",1,4],["I",4,2],["I",3,4],["I",4,1],["I",3,2],["I",2,4],["I",1,3],["I",2,1],
+        ["I",4,2],["I",1,3],["I",3,2],["I",4,3],["I",3,1],["I",2,4],["I",1,2],["I",4,1],
+        ["I",3,2],["I",1,4],["I",2,1],["I",3,4],["I",1,2],["I",3,1],["I",2,3],["I",4,2],
+        ["I",3,4],["I",1,3],["I",4,1],["I",2,4],["I",4,3],["I",1,4],["I",4,2],["I",3,1],
+        ["I",1,2],["I",3,4],["I",2,1],["I",4,3],["I",1,4],["I",4,1],["I",2,3],["I",4,2],
+        ["I",1,3],["I",2,4],["I",1,2],["I",4,3],["I",2,1],["I",3,2],["I",4,1],["I",2,3],
+        ["I",4,2],["I",2,4],["I",1,3],["I",3,2],["I",2,1],["I",3,4],["I",2,3],["I",3,1],
+        ["I",1,4],["I",3,2],["I",4,3],["I",1,2],["I",3,4],["I",4,1],["I",1,3],["I",4,2],
+        ["I",2,4],["I",4,3],["I",3,1],["I",1,4],["I",3,2],["I",1,3],["I",2,1],["I",3,4],
+        ["I",4,1],["I",2,3],["I",3,1],["I",1,2],["I",3,1],["I",4,2],["I",3,4],["I",2,3],
+        ["I",4,1],["I",2,4],["I",3,2],["I",1,4],["I",2,1],["I",3,2],["I",1,3],["I",2,4]]
+  return(x)
+}
+
+## Version B: 112 trials, generated once (fixed for every participant):
+## 36 congruent (each ink 9x), 40 incongruent (word/ink pairs 3-4x; the 4
+## pairs with the word naming the next color after the ink 4x), 36 neutral
+## (XXXXX in each ink 9x); each ink 28x, each color word 19x, XXXXX 36x.
+## No word and no ink repeated on consecutive trials; the same condition at
+## most 3 in a row.
+define VersionBTrials()
+{
+  x <- [["N",5,1],["I",3,2],["N",5,1],["C",4,4],["N",5,1],["I",3,4],["N",5,2],["I",2,4],
+        ["N",5,2],["I",1,4],["N",5,3],["C",1,1],["N",5,2],["I",1,3],["N",5,2],["C",3,3],
+        ["I",2,4],["N",5,3],["C",4,4],["N",5,3],["I",4,2],["N",5,3],["I",1,2],["I",2,4],
+        ["N",5,1],["I",3,2],["C",1,1],["I",2,3],["C",1,1],["C",3,3],["N",5,1],["I",1,4],
+        ["N",5,2],["C",3,3],["I",4,1],["N",5,4],["I",4,2],["C",1,1],["C",3,3],["C",4,4],
+        ["N",5,1],["I",2,3],["N",5,4],["C",3,3],["I",4,1],["C",2,2],["N",5,1],["C",2,2],
+        ["C",4,4],["I",3,1],["I",1,2],["I",4,3],["N",5,2],["I",1,4],["C",2,2],["N",5,4],
+        ["I",2,1],["N",5,4],["C",3,3],["N",5,2],["I",3,4],["N",5,3],["C",4,4],["N",5,2],
+        ["C",4,4],["C",1,1],["I",4,3],["C",2,2],["C",1,1],["N",5,3],["I",2,1],["N",5,2],
+        ["I",4,3],["C",2,2],["N",5,1],["I",2,3],["C",1,1],["I",3,2],["N",5,1],["C",3,3],
+        ["I",1,4],["N",5,3],["I",3,2],["I",1,3],["C",2,2],["C",4,4],["I",3,1],["N",5,4],
+        ["C",2,2],["C",4,4],["I",1,3],["I",4,2],["I",2,1],["N",5,4],["C",3,3],["C",2,2],
+        ["I",3,1],["C",4,4],["N",5,3],["C",2,2],["N",5,4],["C",1,1],["N",5,4],["I",2,1],
+        ["I",3,4],["I",1,2],["N",5,4],["I",4,3],["C",1,1],["N",5,3],["I",4,1],["C",3,3]]
+  return(x)
+}
+
+## Naming practice: 24 trials, 8 congruent (each ink x2), 8 neutral (each
+## ink x2), 8 incongruent (each ink x2 and each word x2)
+define PracticeTrials()
+{
+  x <- [["C",3,3],["N",5,1],["I",2,4],["N",5,3],["N",5,2],["I",4,2],["I",4,3],["N",5,1],
+        ["C",1,1],["N",5,4],["C",1,1],["I",3,1],["C",2,2],["I",1,4],["I",3,2],["N",5,3],
+        ["C",4,4],["I",2,1],["N",5,4],["N",5,2],["C",2,2],["I",1,3],["C",4,4],["C",3,3]]
+  return(x)
+}
+
+## Version A practice: 3 parts of 4 trials, always in this order:
+## [intro text key, response mode, trials]
+define PracticeAParts()
+{
+  ## XXXXX in verde, azul, preto, rosa (respond to the ink)
+  neutral <- [["N",5,3],["N",5,2],["N",5,4],["N",5,1]]
+  ## ROSA in preto, PRETO in azul, VERDE in rosa, AZUL in verde
+  words   <- [["I",1,4],["I",4,2],["I",3,1],["I",2,3]]
+  return([["PRACTICE_A_NEUTRAL", "nomeacao", neutral],
+          ["PRACTICE_A_READING", "leitura", words],
+          ["PRACTICE_A_NAMING", "nomeacao", words]])
+}
+
+## Random order of items (used for repeated practice rounds) with the
+## constraints: no stimulus repeated on consecutive trials, same correct
+## response (word in "leitura", ink in "nomeacao") at most 2 in a row, same
+## condition at most 3 in a row. Starts over if it gets stuck.
+define OrderTrials(items, mode)
+{
+  result <- []
+  done <- 0
+  tries <- 0
+  while(not done)
+  {
+    rem <- Shuffle(items)
+    seq <- []
+    stuck <- 0
+    while(Length(rem) > 0 and (not stuck))
+    {
+      pick <- 0
+      i <- 1
+      loop(x, rem)
+      {
+        if(pick == 0)
+        {
+          if(TrialFits(seq, x, mode))
+          {
+            pick <- i
+          }
+        }
+        i <- i + 1
+      }
+      if(pick == 0)
+      {
+        stuck <- 1
+      } else {
+        seq <- Append(seq, Nth(rem, pick))
+        rem <- RemoveNth(rem, pick)
+      }
+    }
+    tries <- tries + 1
+    if(not stuck)
+    {
+      result <- seq
+      done <- 1
+    } elseif(tries >= 500)
+    {
+      Print("stroop-pt: could not satisfy the trial order constraints; using an unconstrained order")
+      result <- Shuffle(items)
+      done <- 1
+    }
+  }
+  return(result)
+}
+
+## correct response of an item in the given mode
+define ResponseOf(x, mode)
+{
+  if(mode == "leitura")
+  {
+    r <- Second(x)
+  } else {
+    r <- Third(x)
+  }
+  return(r)
+}
+
+define TrialFits(seq, x, mode)
+{
+  n <- Length(seq)
+  fits <- 1
+  if(n >= 1)
+  {
+    a <- Nth(seq, n)
+    if(First(a) == First(x) and Second(a) == Second(x) and Third(a) == Third(x))
+    {
+      fits <- 0
+    }
+    if(n >= 2)
+    {
+      b <- Nth(seq, n-1)
+      if(ResponseOf(a,mode) == ResponseOf(x,mode) and ResponseOf(b,mode) == ResponseOf(x,mode))
+      {
+        fits <- 0
+      }
+      if(n >= 3)
+      {
+        c <- Nth(seq, n-2)
+        if(First(a) == First(x) and First(b) == First(x) and First(c) == First(x))
+        {
+          fits <- 0
+        }
+      }
+    }
+  }
+  return(fits)
+}
+
+define RemoveNth(list, k)
+{
+  out <- []
+  i <- 1
+  loop(x, list)
+  {
+    if(i != k)
+    {
+      out <- Append(out, x)
+    }
+    i <- i + 1
+  }
+  return(out)
+}
+
+###################################################
+## Standard initializer: window, layout, fonts, colors.
+define Initialize()
+{
+  gSleepEasy <- 1
+  gWin <- MakeWindow("white")
+
+  ## Layout zones only (no response UI); footer shown during trials
+  gParams.responsemode <- "none"
+  gLayout <- CreateLayout("stroop-pt", gWin, gParams)
+  gLayout.subheader.visible <- 1
+
+  ShowCursor(0)
+
+  gBG <- MakeColor("white")
+  fg  <- MakeColor("black")
+
+  gInstructionsFont <- MakeFont(gPEBLBaseFont,0,22, fg,gBG,1)
+  gStimFont         <- MakeFont(gPEBLBaseFont,0,60,fg,gBG,1)
+
+  ## Instruction box: 75% of the screen width
+  instructionWidth <- Round(gVideoWidth * 0.75)
+  gInstructions <- MakeTextBox("", gInstructionsFont, instructionWidth, 400)
+  gInstructions.isadaptive <- 1
+  gInstructions.formatted <- 1
+  AddObject(gInstructions, gWin)
+  Move(gInstructions, gLayout.centerX - (instructionWidth/2), 100)
+  Hide(gInstructions)
+
+  gHeader <- MakeLabel("",gStimFont)
+  AddObject(gHeader,gWin)
+  Move(gHeader, gLayout.centerX, 50)
+  Hide(gHeader)
+
+  gStimLabel <- MakeLabel("",gStimFont)
+  AddObject(gStimLabel,gWin)
+  Move(gStimLabel, gLayout.centerX, gLayout.centerY)
+  Hide(gStimLabel)
+
+  responseInstructionFontSize <- Round(20 * gLayout.scale)
+  responseInstructionFont <- MakeFont(gPEBLBaseFont, 0, responseInstructionFontSize, fg, gBG, 1)
+  gResponseInstruction <- MakeLabel("", responseInstructionFont)
+  AddObject(gResponseInstruction, gWin)
+  Move(gResponseInstruction, gLayout.centerX, gLayout.zones.response.y + (gLayout.zones.response.height / 2))
+  Hide(gResponseInstruction)
+
+  if(not FileExists("data"))
+  {
+    MakeDirectory("data")
+  } elseif(not IsDirectory("data"))
+  {
+    SignalFatalError("File named 'data' exists.  Remove so data directory can be created.")
+  }
+
+  ## Ink colors: 1 rosa (light pink), 2 azul (azure blue), 3 verde (lime green), 4 preto (black)
+  gColors <- [MakeColorRGB(255,182,193), MakeColorRGB(0,127,255),
+              MakeColorRGB(130,211,5),   MakeColorRGB(0,0,0)]
+  gInternalColorNames <- ["rosa","azul","verde","preto"]
+
+  gFonts <- []
+  loop(i,gColors)
+  {
+    gFonts <- Append(gFonts, MakeFont(gPEBLBaseFontMono, 0, gStimSize, i, gBG, 1))
+  }
+}
+
+define GetStrings(language)
+{
+  gStrings <- GetTranslations("stroop-pt", "pt")  ## always European Portuguese
+
+  gColorNames <- [gStrings.color1, gStrings.color2, gStrings.color3, gStrings.color4]
+  ## words shown on the trials: uppercase (ROSA, AZUL, VERDE, PRETO, XXXXX)
+  gWordNames  <- [Uppercase(gStrings.color1), Uppercase(gStrings.color2), Uppercase(gStrings.color3),
+                  Uppercase(gStrings.color4), Uppercase(gStrings.neutral)]
+}
+
+## Set label text and adapt font size if too wide for screen
+define SetAdaptiveLabel(label, text, maxWidth)
+{
+   label.text <- text
+   textWidth <- label.width
+   if(textWidth > maxWidth)
+   {
+      scaleFactor <- maxWidth / textWidth
+      newFontSize <- Max(10, Round(label.font.size * scaleFactor * 0.95))
+      newFont <- MakeFont(gPEBLBaseFont, 0, newFontSize, label.font.fgcolor, label.font.bgcolor, 1)
+      label.font <- newFont
+   }
+}
+
+## Key-learning screen: pressing D, F, J or K shows that key's color;
+## the space bar continues.
+define DoKeyPractice(text)
+{
+   instructions <- EasyTextBox(text, 10, 10, gWin, 28, gVideoWidth-20, 200)
+   instructions.formatted <- 1
+   Show(instructions)
+   Hide(gStimLabel)
+
+   SetAdaptiveLabel(gResponseInstruction, gFooter1Text, gVideoWidth - 40)
+   Show(gResponseInstruction)
+   gLayout.footer.text <- gFooter2Text
+   Show(gLayout.footer)
+
+   patch <- Rectangle(gLayout.centerX, gLayout.centerY+60, 300, 100, gBG, 1)
+   AddObject(patch, gWin)
+   frame <- Rectangle(gLayout.centerX, gLayout.centerY+60, 300, 100, MakeColor("grey60"), 0)
+   AddObject(frame, gWin)
+   lab <- EasyLabel("", gLayout.centerX, gLayout.centerY-30, gWin, 40)
+   Draw()
+
+   resp <- 0
+   while(resp != 5)
+   {
+     resp <- WaitForIt(["d","f","j","k"," "])
+     if(resp >= 1 and resp <= 4)
+     {
+       colid <- Nth(gKeyColor, resp)
+       patch.color <- Nth(gColors, colid)
+       lab.text <- Nth(gKeyLabels, resp) + " = " + Nth(gColorNames, colid)
+       Draw()
+     }
+   }
+
+   RemoveObjects([instructions, patch, frame, lab], gWin)
+   Draw()
+}
+
+## Takes a list of keys, returns the index of the one pressed.
+define WaitForIt(keylist)
+{
+   code <- Sequence(1,Length(keylist),1)
+   resp <- (WaitForListKeyPress(keylist))
+   outid <- 0
+   loop(i,Transpose([keylist,code]))
+   {
+     if(Uppercase(resp) == Uppercase(First(i)))
+     {
+       outid <- Second(i)
+       break
+     }
+   }
+   return (outid)
+}
+
+## Practice choice screen (as in the other Portuguese tests): text and two
+## boxes to click with the mouse, one to repeat the practice and one to start
+## the task. Returns 1 (repeat the practice) or 0 (start the task).
+define PracticeChoice(text, win, fontsize:30)
+{
+  repeatText <- PracticeString("PRACTICEREPEAT", "Repeat the practice")
+  startText  <- PracticeString("PRACTICESTART", "Start the real test")
+
+  bgcol <- win.BGCOLOR
+  if(Max([bgcol.RED, bgcol.GREEN, bgcol.BLUE]) <= 100)
+  {
+    fgcol <- MakeColor("white")
+  } else {
+    fgcol <- MakeColor("black")
+  }
+
+  bg <- MakeCanvas(gVideoWidth, gVideoHeight, bgcol)
+  Move(bg, gVideoWidth/2, gVideoHeight/2)
+  AddObject(bg, win)
+  box <- EasyTextBox(text, 100, 50, win, fontsize, gVideoWidth-200, gVideoHeight-250)
+
+  y <- gVideoHeight - 110
+  repeatLab <- EasyLabel(repeatText, gVideoWidth/2, y, win, 28)
+  startLab  <- EasyLabel(startText, gVideoWidth/2, y, win, 28)
+  w <- Max([repeatLab.width, startLab.width]) + 60
+  Move(repeatLab, gVideoWidth/2 - w/2 - 30, y)
+  Move(startLab, gVideoWidth/2 + w/2 + 30, y)
+  repeatBox <- Rectangle(gVideoWidth/2 - w/2 - 30, y, w, 70, fgcol, 0)
+  startBox  <- Rectangle(gVideoWidth/2 + w/2 + 30, y, w, 70, fgcol, 0)
+  AddObject(repeatBox, win)
+  AddObject(startBox, win)
+
+  Draw()
+  ShowCursor(1)
+  choice <- WaitForClickOnTarget([repeatBox, startBox], [1, 0])
+  LSLMarker("practice_choice_" + choice)
+
+  RemoveObjects([bg, box, repeatLab, startLab, repeatBox, startBox], win)
+  Draw()
+  return choice
+}
+
+## Text from the translation file, or the English default if missing.
+define PracticeString(key, fallback)
+{
+  out <- fallback
+  if(PropertyExists(gStrings, key))
+  {
+    out <- GetProperty(gStrings, key)
+  }
+  return out
+}
+
+## >>> BEGIN beeps.pbl (auto-copied, do not edit)
+##########################################################
+## beeps.pbl -- reusable pure-tone (sine wave) functions
+##
+## PEBL has no import statement, so this file is COPIED into each test
+## by setup-study.bat (from <study>/utils/beeps.pbl). Edit only that copy,
+## then re-run setup-study.bat.
+##
+## Standard start/end beeps: setup-study.bat also inserts
+##     BeepsStart()   right after the test's LSL setup line (window just opened)
+##     BeepsEnd()     right before the test's LSL shutdown line (test finished)
+## so every synced test beeps at its start and end automatically. BeepsEnd()
+## also saves all beeps to data/<subject>/beeps-<subject>.csv.
+## To opt a test out of the automatic calls, put this line anywhere in it:
+##     ## beeps: no auto calls
+## (the functions below stay available for calling by hand).
+##
+## Why not MakeSineWave()?  In this PEBL build (2.4, Windows) MakeSineWave()
+## returns a sound with no audio buffer: it plays for 0 ms. Instead, each
+## tone is written once to a .wav file (via a small PowerShell helper) in the
+## test's folder, e.g. tone-1000Hz-50ms-a0.8.wav, and loaded with LoadSound().
+## Later runs reuse the cached file, so the PowerShell call only happens the
+## first time a given frequency/duration/amplitude is requested.
+##
+## Functions:
+##   MakeTone(freq, durationMs, amplitude:0.8)
+##        Returns a sound object you can pass to PlayTone/PlayBackground.
+##        Call it early (e.g. during setup) to avoid the one-time ~0.3 s
+##        generation delay and the up-to-1 s clock sync (see below) at
+##        play time.
+##   PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+##        Plays a tone and returns its onset timestamp (GetTime(), ms).
+##        blocking=1 waits for the tone to finish (use it right before the
+##        script exits). Each play is recorded in gToneLog.
+##   Beep(label:"beep")
+##        Shortcut: 1000 Hz, 50 ms, amplitude 0.8, non-blocking.
+##   BeepsStart() / BeepsEnd()
+##        Standard 1000 Hz / 50 ms start and end beeps (see above). The end
+##        beep is blocking and followed by a 250 ms wait, so it finishes
+##        playing before the test closes.
+##   GetToneLog()
+##        List of [label, freq, durationMs, amplitude, timestamp, clocktime]
+##        for every tone played so far.
+##
+## timestamp comes from GetTime(), so it is on the same clock as the RTs and
+## abstime values PEBL tests already record.
+## clocktime is the PC's local clock time, "YYYY-MM-DD HH:MM:SS.mmm".
+## PEBL's TimeStamp() only has 1 s resolution (and GetTimeOfDay() returns a
+## broken value in this build), so on first use the library waits for the PC
+## clock's second to tick over (up to 1 s), records GetTime() at that instant,
+## and afterwards computes clock time = that second + elapsed GetTime().
+##########################################################
+
+define MakeTone(freq, durationMs, amplitude:0.8)
+{
+  ToneClockSync()
+  key <- freq + "Hz-" + durationMs + "ms-a" + amplitude
+
+  ## reuse an already-loaded sound
+  if(not VariableExists("gToneCache"))
+  {
+    gToneCache <- []
+  }
+  sound <- 0
+  loop(pair, gToneCache)
+  {
+    if(First(pair) == key)
+    {
+      sound <- Second(pair)
+    }
+  }
+
+  if(IsNumber(sound))
+  {
+    filename <- "tone-" + key + ".wav"
+    if(not FileExists(filename))
+    {
+      ToneWriteHelper()
+      cmd <- "powershell -NoProfile -ExecutionPolicy Bypass -File beeps-maketone.ps1" +
+             " -f " + freq + " -d " + durationMs + " -a " + amplitude + " -o " + filename
+      SystemCall(cmd, "")
+      if(not FileExists(filename))
+      {
+        SignalFatalError("beeps.pbl: could not create " + filename +
+                         " (PowerShell is required to generate tones)")
+      }
+    }
+    sound <- LoadSound(filename)
+    gToneCache <- Append(gToneCache, [key, sound])
+  }
+  return(sound)
+}
+
+
+define PlayTone(freq:1000, durationMs:50, amplitude:0.8, blocking:0, label:"tone")
+{
+  sound <- MakeTone(freq, durationMs, amplitude)
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+
+  t <- GetTime()
+  if(blocking)
+  {
+    PlayForeground(sound)
+  } else {
+    PlayBackground(sound)
+  }
+
+  gToneLog <- Append(gToneLog, [label, freq, durationMs, amplitude, t, ToneClockTime(t)])
+  return(t)
+}
+
+
+define Beep(label:"beep")
+{
+  return(PlayTone(1000, 50, 0.8, 0, label))
+}
+
+
+## Syncs GetTime() to the PC clock once (waits up to 1 s the first time).
+## Returns [GetTime() at a whole second, that second as ms since midnight].
+define ToneClockSync()
+{
+  if(not VariableExists("gToneClockAnchor"))
+  {
+    ts0 <- TimeStamp()
+    ts <- ts0
+    while(ts == ts0)
+    {
+      ts <- TimeStamp()
+    }
+    t <- GetTime()
+    gToneClockAnchor <- [t, Nth(ToneParseTimeStamp(ts),4)*1000]
+  }
+  return(gToneClockAnchor)
+}
+
+
+## Converts a GetTime() value to PC local clock time "YYYY-MM-DD HH:MM:SS.mmm"
+define ToneClockTime(t)
+{
+  anchor <- ToneClockSync()
+  date <- ToneParseTimeStamp(TimeStamp())
+  ms <- Mod(Second(anchor) + t - First(anchor), 86400000)
+  clock <- Nth(date,1) + "-" + ZeroPad(Nth(date,2),2) + "-" + ZeroPad(Nth(date,3),2) + " " +
+           ZeroPad(Floor(ms/3600000),2) + ":" + ZeroPad(Floor(Mod(ms,3600000)/60000),2) + ":" +
+           ZeroPad(Floor(Mod(ms,60000)/1000),2) + "." + ZeroPad(Mod(ms,1000),3)
+  return(clock)
+}
+
+
+## Parses TimeStamp() text like "Fri Oct 09 20:31:36 2026"
+## into [year, month, day, seconds since midnight]
+define ToneParseTimeStamp(ts)
+{
+  tokens <- []
+  loop(tok, SplitString(ts, " "))
+  {
+    if(tok != "")
+    {
+      tokens <- Append(tokens, tok)
+    }
+  }
+  month <- 1
+  i <- 1
+  loop(name, ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+  {
+    if(name == Nth(tokens,2))
+    {
+      month <- i
+    }
+    i <- i + 1
+  }
+  hms <- SplitString(Nth(tokens,4), ":")
+  secs <- ToNumber(Nth(hms,1))*3600 + ToNumber(Nth(hms,2))*60 + ToNumber(Nth(hms,3))
+  return([ToNumber(Nth(tokens,5)), month, ToNumber(Nth(tokens,3)), secs])
+}
+
+
+## Standard start beep (inserted automatically by setup-study.bat)
+define BeepsStart()
+{
+  MakeTone(1000, 50)   ## generate/load and sync the clock before playing
+  return(Beep("beep_start"))
+}
+
+
+## Standard end beep (inserted automatically by setup-study.bat).
+## Blocking, then saves every beep of this run to data/<subject>/beeps-<subject>.csv
+## The blocking play only waits until PEBL has handed the tone to the sound
+## card (~50 ms); the end of the tone is still queued in Windows' audio buffer.
+## Tests that close right after BeepsEnd() (e.g. affectgrid, TNT) would cut
+## the tone off, so wait 250 ms for the buffer to drain before returning.
+define BeepsEnd()
+{
+  t <- PlayTone(1000, 50, 0.8, 1, "beep_end")
+  Wait(250)
+  BeepsWriteLog()
+  return(t)
+}
+
+
+## Writes all beeps played so far to data/<subject>/beeps-<subject>.csv
+## (the same folder as the test's other data files; appends if it exists)
+define BeepsWriteLog()
+{
+  dir <- "data/" + gSubNum
+  if(not IsDirectory("data"))
+  {
+    MakeDirectory("data")
+  }
+  if(not IsDirectory(dir))
+  {
+    MakeDirectory(dir)
+  }
+  filename <- dir + "/beeps-" + gSubNum + ".csv"
+  isnew <- not FileExists(filename)
+  out <- FileOpenAppend(filename)
+  if(isnew)
+  {
+    FilePrint(out, "subnum,event,freq,durationms,amplitude,abstime,clocktime")
+  }
+  loop(tone, GetToneLog())
+  {
+    FilePrint(out, gSubNum + "," + ConcatenateList(tone, ","))
+  }
+  FileClose(out)
+  return(filename)
+}
+
+
+define GetToneLog()
+{
+  if(not VariableExists("gToneLog"))
+  {
+    gToneLog <- []
+  }
+  return(gToneLog)
+}
+
+
+## Writes the PowerShell WAV generator next to the test (once).
+## Output: 44.1 kHz, 16-bit, mono PCM sine wave.
+define ToneWriteHelper()
+{
+  helper <- "beeps-maketone.ps1"
+  if(not FileExists(helper))
+  {
+    ps <- FileOpenOverwrite(helper)
+    FilePrint(ps, "param([double]$f,[int]$d,[double]$a,[string]$o)")
+    FilePrint(ps, "$sr=44100; $n=[int]($sr*$d/1000); $ms=New-Object IO.MemoryStream; $w=New-Object IO.BinaryWriter($ms)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36+$n*2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))")
+    FilePrint(ps, "$w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr*2)); $w.Write([int16]2); $w.Write([int16]16)")
+    FilePrint(ps, "$w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n*2))")
+    FilePrint(ps, "for($i=0;$i -lt $n;$i++){ $w.Write([int16][Math]::Round(32767*$a*[Math]::Sin(2*[Math]::PI*$f*$i/$sr))) }")
+    FilePrint(ps, "$w.Flush(); [IO.File]::WriteAllBytes((Join-Path (Get-Location) $o),$ms.ToArray())")
+    FileClose(ps)
+  }
+  return(helper)
+}
+## <<< END beeps.pbl

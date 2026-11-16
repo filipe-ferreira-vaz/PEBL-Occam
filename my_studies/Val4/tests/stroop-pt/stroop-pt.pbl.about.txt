@@ -1,0 +1,13 @@
+Color Stroop task - Portuguese study version (stroop-pt)
+
+Based on the PEBL Color Stroop Task (Shane T. Mueller). Words are shown in one of four ink colors on a white background: rosa (light pink), azul (azure blue), verde (lime green) and preto (black). The participant responds with the keys D, F, J and K, each standing for one color.
+
+Two versions (parameter "version"):
+ A: the 112 words of the paper Stroop sheet (all incongruent, read column by column), shown twice: first in the "bloco de leitura" (respond to the word, ignoring the ink), then in the "bloco de nomeacao" (respond to the ink, ignoring the word). One practice comes before the two blocks (none between them): 4 x XXXXX in the inks verde, azul, preto, rosa (respond to the ink), 4 reading trials (ROSA in preto, PRETO in azul, VERDE in rosa, AZUL in verde), then the same 4 words as naming trials.
+ B: one naming block of 112 trials, roughly a third of each condition (36 congruent, 40 incongruent, 36 neutral "XXXXX"), in one fixed order, the same for every participant: no word or ink repeated on consecutive trials, the same condition at most 3 in a row, every ink 28 times, congruent and neutral 9 times per ink, incongruent word/ink pairs 3-4 times.
+
+The practice gives feedback and can be repeated as often as wanted (version B: 24 trials before its block). The task blocks give no feedback. There is no time limit per trial; each task block ends after 120 s (parameter blockTimeLimit) or when its 112 trials are done. The trial cut off by the time limit is recorded with timeup = 1 and left out of the summaries.
+
+The key-color mapping is counterbalanced between participants (counterbalance/stroop-pt-keys.csv in the study folder: all 24 mappings once in every block of 24 IDs) and is the same in both versions and blocks.
+
+Data: data/<ID>/stroop-pt-<ID>.csv (one row per trial, practice included; version, block type, block time limit, time into the block), stroop-pt-summary-<ID>.txt, data/stroop-pt-sumall.csv (one row per run: version, block time limit and, per block, trials completed, time used, whether time ran out, errors, RT and accuracy by condition), beeps-<ID>.csv.

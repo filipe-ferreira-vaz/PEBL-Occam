@@ -197,6 +197,12 @@
       "included": true,
       "test_name": "survey-tol",
       "test_path": "survey-tol"
+    },
+    {
+      "display_name": "stroop-pt",
+      "included": true,
+      "test_name": "stroop-pt",
+      "test_path": "stroop-pt"
     }
   ],
   "upload_server_url": "",

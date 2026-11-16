@@ -4,7 +4,7 @@ rem and the session (A or B), then runs the European Portuguese tests:
 rem   Session A: bigfive-portuguese, affectgrid-portuguese-A,
 rem              counterbalanced: vsearch-customize-portuguese (search sizes 40,50,60),
 rem                               TNT-custom-stimulus-time-portuguese (4000 ms),
-rem                               maze-increasing-difficulty-v1-portuguese, stroop (external),
+rem                               maze-increasing-difficulty-v1-portuguese, stroop-pt,
 rem              affectgrid-portuguese-A
 rem   Session B: affectgrid-portuguese-B,
 rem              counterbalanced: ptrails-pt-portuguese, raven matrices (external), tol-portuguese,

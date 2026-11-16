@@ -1,0 +1,50 @@
+{
+  "test": "stroop-pt",
+  "version": "2.0",
+  "description": "Color Stroop Task (Portuguese study version) - white background, rosa/azul/verde/preto inks, D/F/J/K keys counterbalanced between participants; version A (paper-sheet order, reading + naming blocks) or B (112 fixed mixed trials, naming block); 120 s per block",
+  "parameters": [
+    {
+      "name": "version",
+      "type": "string",
+      "default": "A",
+      "description": "A = the 112 words of the paper Stroop sheet (all incongruent), in a reading block (respond to the word) followed by a naming block (respond to the ink), after one fixed 12-trial practice. B = one naming block of 112 congruent/incongruent/neutral (XXXXX) trials in one fixed order.",
+      "options": ["A", "B"]
+    },
+    {
+      "name": "stimsize",
+      "type": "integer",
+      "default": 60,
+      "description": "Stimulus font size in pixels."
+    },
+    {
+      "name": "fixationTime",
+      "type": "integer",
+      "default": 1000,
+      "description": "Time for the fixation cross in milliseconds (0 = no fixation cross)."
+    },
+    {
+      "name": "isi",
+      "type": "integer",
+      "default": 0,
+      "description": "Inter-stimulus interval in milliseconds: blank screen after each trial (after the feedback, in the practice), before the next fixation cross."
+    },
+    {
+      "name": "blockTimeLimit",
+      "type": "integer",
+      "default": 120000,
+      "description": "Time limit of each task block in milliseconds; the block ends when it runs out or when all its trials are done. There is no time limit per trial, and none in the practice. 0 = no block time limit (the instructions still mention <BLOCKTIME> seconds, so edit them if you use 0)."
+    },
+    {
+      "name": "keyfile",
+      "type": "string",
+      "default": "../../counterbalance/stroop-pt-keys.csv",
+      "description": "Key-color counterbalancing file (participant,D,F,J,K), relative to the test folder. Participants not in it get D=rosa F=azul J=verde K=preto."
+    },
+    {
+      "name": "keycolors",
+      "type": "string",
+      "default": "",
+      "description": "Optional override of the key mapping: the colors for D F J K separated by spaces, e.g. 'rosa azul verde preto'. Empty = use keyfile."
+    }
+  ]
+}

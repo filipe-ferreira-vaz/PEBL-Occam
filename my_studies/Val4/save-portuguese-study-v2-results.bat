@@ -7,9 +7,10 @@ rem (Enter = this study folder; type e.g. E:\ to save on a USB drive).
 rem Only the files in tests\<test>\data\<ID>\ of that session's tests are copied
 rem (the pooled files with every participant are not).
 rem   Session A: bigfive-portuguese, affectgrid-portuguese-A, vsearch-customize-portuguese,
-rem              TNT-custom-stimulus-time-portuguese, maze-increasing-difficulty-v1-portuguese
+rem              TNT-custom-stimulus-time-portuguese, maze-increasing-difficulty-v1-portuguese,
+rem              stroop-pt
 rem   Session B: affectgrid-portuguese-B, ptrails-pt-portuguese, tol-portuguese
-rem Stroop, Raven, go/no-go and the EMA survey are run outside PEBL: save their results by hand.
+rem Raven, go/no-go and the EMA survey are run outside PEBL: save their results by hand.
 rem Options: save-portuguese-study-v2-results.bat <ID> <A or B>
 rem   gives the ID and session (it then only asks where to save, and does not pause
 rem   at the end); run-portuguese-study-v2 calls it this way when the session ends.
@@ -52,7 +53,7 @@ if "%DEST:~-1%"=="\" set "DEST=%DEST:~0,-1%"
 if not exist "%DEST%\" (echo   Folder not found: %DEST%& goto ask_dest)
 
 if "%SESSION%"=="A" (
-  set "LIST=bigfive-portuguese affectgrid-portuguese-A vsearch-customize-portuguese TNT-custom-stimulus-time-portuguese maze-increasing-difficulty-v1-portuguese"
+  set "LIST=bigfive-portuguese affectgrid-portuguese-A vsearch-customize-portuguese TNT-custom-stimulus-time-portuguese maze-increasing-difficulty-v1-portuguese stroop-pt"
 ) else (
   set "LIST=affectgrid-portuguese-B ptrails-pt-portuguese tol-portuguese"
 )
@@ -94,7 +95,7 @@ if %COPIED% EQU 0 (
 )
 echo %COPIED% test^(s^) saved to %OUT%
 if %MISSING% GTR 0 echo %MISSING% test^(s^) had no data for participant %ID% - check above.
-if "%SESSION%"=="A" echo Remember to save the Stroop and EMA survey results ^(done outside PEBL^).
+if "%SESSION%"=="A" echo Remember to save the EMA survey results ^(done outside PEBL^).
 if "%SESSION%"=="B" echo Remember to save the Raven, go/no-go and EMA survey results ^(done outside PEBL^).
 
 :end

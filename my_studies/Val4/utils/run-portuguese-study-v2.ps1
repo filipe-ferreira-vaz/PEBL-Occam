@@ -18,7 +18,7 @@
 #                vsearch-customize-portuguese         searchsizes 40,50,60 (rest default)
 #                TNT-custom-stimulus-time-portuguese  StimulusDuration 4000 ms
 #                maze-increasing-difficulty-v1-portuguese
-#                stroop (external, not PEBL)
+#                stroop-pt                            version A, fixationTime 0 ms, isi 0 ms, blockTimeLimit 120000 ms (no per-trial limit); key-color mapping from counterbalance/stroop-pt-keys.csv
 #              affectgrid-portuguese-A
 #   Session B  affectgrid-portuguese-B
 #              the 4 tests below in the participant's order, with the EMA survey after the 2nd:
@@ -30,6 +30,7 @@
 #   EMA survey = Survey Ecological Momentary Assessment (external, not PEBL):
 #   test 1, test 2, EMA survey, test 3, test 4.
 # For an external test the script only says what to do and waits for Enter.
+# PEBL tests (stroop-pt included) beep at their start and end (beeps.pbl).
 # Raven matrices beeps like the PEBL tests (1000 Hz, 50 ms) when it starts (Enter = run it)
 # and when Enter is pressed at its end; beeps are logged to
 # counterbalance\portuguese-study-v2-external-beeps.csv.
@@ -43,7 +44,7 @@
 # Counterbalancing: each participant's fixed order is read from
 # counterbalance/portuguese-study-v2-orders.csv (one row per ID 1-300, columns
 # participant, session_A_order, session_B_order; keys separated by spaces:
-#   A: vsearch, tnt, maze, stroop     B: ptrails, raven, tol, gonogo).
+#   A: vsearch, tnt, maze, stroop (= stroop-pt)     B: ptrails, raven, tol, gonogo).
 # The file is defined beforehand and only read here (the script stops if it is
 # missing, if the ID has no row, or if a row does not list the session's 4 tests
 # once each). Edit that file to change an order. As provided, each session
@@ -264,7 +265,7 @@ $tests = @{
   vsearch = Step 'vsearch-customize-portuguese (search sizes 40,50,60)' 'vsearch-customize-portuguese' 'vsearch-customize-portuguese' "{`r`n  `"searchsizes`": [40,50,60]`r`n}`r`n"
   tnt     = Step 'TNT-custom-stimulus-time-portuguese (stimulus 4000 ms)' 'TNT-custom-stimulus-time-portuguese' 'TNT-custom-stimulus-time-portuguese' "{`r`n  `"StimulusDuration`": 4000`r`n}`r`n"
   maze    = Step 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese' 'maze-increasing-difficulty-v1-portuguese'
-  stroop  = Step 'stroop (EXTERNAL - not PEBL)' '' '' $null 'Stroop test'
+  stroop  = Step 'stroop-pt (version A, fixation 0 ms, ISI 0 ms, 120 s per block)' 'stroop-pt' 'stroop-pt' "{`r`n  `"version`": `"A`",`r`n  `"fixationTime`": 0,`r`n  `"isi`": 0,`r`n  `"blockTimeLimit`": 120000`r`n}`r`n"
   ptrails = Step 'ptrails-pt-portuguese' 'ptrails-pt-portuguese' 'ptrails-pt-portuguese'
   raven   = Step 'raven matrices (EXTERNAL - not PEBL)' '' '' $null 'Raven matrices' 'raven'
   tol     = Step 'tol-portuguese/TOL-portuguese' 'tol-portuguese' 'TOL-portuguese'
