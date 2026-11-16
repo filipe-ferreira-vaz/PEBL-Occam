@@ -7,7 +7,7 @@
       "name": "version",
       "type": "string",
       "default": "A",
-      "description": "A = the 112 words of the paper Stroop sheet (all incongruent), in a reading block (respond to the word) followed by a naming block (respond to the ink), after one fixed 12-trial practice. B = one naming block of 112 congruent/incongruent/neutral (XXXXX) trials in one fixed order.",
+      "description": "A = the 112 words of the paper Stroop sheet (all incongruent), in a reading block (respond to the word) followed by a naming block (respond to the ink), each after its own fixed 4-trial practice. B = one naming block of 112 congruent/incongruent/neutral (XXXXX) trials in one fixed order.",
       "options": ["A", "B"]
     },
     {
@@ -32,7 +32,7 @@
       "name": "blockTimeLimit",
       "type": "integer",
       "default": 120000,
-      "description": "Time limit of each task block in milliseconds; the block ends when it runs out or when all its trials are done. There is no time limit per trial, and none in the practice. 0 = no block time limit (the instructions still mention <BLOCKTIME> seconds, so edit them if you use 0)."
+      "description": "Time limit of each task block in milliseconds; the block ends when it runs out or when all its trials are done. There is no time limit per trial, and none in the practice. 0 = no block time limit."
     },
     {
       "name": "keyfile",

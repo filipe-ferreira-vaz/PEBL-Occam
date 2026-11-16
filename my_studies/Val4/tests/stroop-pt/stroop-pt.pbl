@@ -14,11 +14,10 @@
  ##       column by column, top to bottom), in two blocks:
  ##         block 1 "bloco de leitura":  respond to the WORD (ignore the ink)
  ##         block 2 "bloco de nomeacao": respond to the INK (ignore the word)
- ##       One practice before the two blocks (none between them), 12 trials
- ##       in a fixed order: 4 x XXXXX in the inks verde, azul, preto, rosa
- ##       (respond to the ink), then 4 reading trials (respond to the word):
- ##       ROSA/preto ink, PRETO/azul, VERDE/rosa, AZUL/verde, then the same
- ##       4 words as naming trials (respond to the ink).
+ ##       A 4-trial practice before each block, in a fixed order: before
+ ##       block 1, 4 reading trials (respond to the word): ROSA/preto ink,
+ ##       PRETO/azul, VERDE/rosa, AZUL/verde; before block 2, the same 4
+ ##       words as naming trials (respond to the ink).
  ##    B: one naming block (respond to the ink) of 112 trials, roughly a
  ##       third each congruent, incongruent and neutral ("XXXXX"): 36 / 40 / 36,
  ##       in one fixed order (the same for every participant), generated once
@@ -38,7 +37,7 @@
  ##  - fixationTime 0 = no fixation cross; isi = blank screen after each trial
  ##  - keyboard responses only (the audio mode of the original is removed)
  ##  - start/end beeps (beeps.pbl), LSL markers
- ##  - instructions in European Portuguese (marked [NOT FINAL])
+ ##  - instructions in European Portuguese
  #######################################################
 
 define Start(p)
@@ -102,11 +101,12 @@ define Start(p)
 
    if(gVersion == "A")
    {
-     ## one practice (fixed 12 trials, mixed rules), then the two blocks
-     prounds <- RunPracticeA()
-     res1 <- DoBlock(1, 2, "leitura", VersionATrials(), "READINGINTRO", 0, prounds)
+     ## a fixed 4-trial practice before each block
+     prounds1 <- RunPracticeA(1, "leitura", "PRACTICE_A_READING", 1)
+     res1 <- DoBlock(1, 2, "leitura", VersionATrials(), "READINGINTRO", 0, prounds1)
      ShowText(Txt("BLOCKDONE"))
-     res2 <- DoBlock(2, 2, "nomeacao", VersionATrials(), "NAMINGINTRO", 0, 0)
+     prounds2 <- RunPracticeA(2, "nomeacao", "PRACTICE_A_NAMING", 0)
+     res2 <- DoBlock(2, 2, "nomeacao", VersionATrials(), "NAMINGINTRO", 0, prounds2)
    } else {
      res1 <- DoBlock(1, 1, "nomeacao", VersionBTrials(), "", 1, 0)
      res2 <- Repeat("NA", 16)
@@ -271,23 +271,22 @@ define RunPractice(blocknum, mode)
    return(practiceround - 1)
 }
 
-## Version A practice (before both blocks): the 3 parts of PracticeAParts,
-## each after its own instruction screen, with feedback. Afterwards the
-## participant chooses to repeat it (same trials, same order) or start the
-## task. Returns the number of practice rounds done.
-define RunPracticeA()
+## Version A practice before one block (mode "leitura" or "nomeacao"):
+## optionally the key-learning screen (keypractice = 1), then the practice
+## intro text and the 4 trials of PracticeATrials, with feedback. Afterwards
+## the participant chooses to repeat it (same trials, same order) or start the
+## block. Returns the number of practice rounds done.
+define RunPracticeA(blocknum, mode, introkey, keypractice)
 {
-   parts <- PracticeAParts()
-   totalTrials <- 0
-   loop(part, parts)
-   {
-     totalTrials <- totalTrials + Length(Third(part))
-   }
+   trials <- PracticeATrials()
+   totalTrials <- Length(trials)
+   gMode <- mode
+   gFooter2Text <- Txt("FOOTER2_" + Uppercase(mode))
    practiceround <- 1
    repeatPractice <- 1
    while(repeatPractice)
    {
-     gBlock <- "practice-" + practiceround
+     gBlock <- "practice" + blocknum + "-" + practiceround
      gErr  <- []; gRT   <- []; gCond <- []
      gErrors           <- 0
      gConflictErrors   <- 0
@@ -295,34 +294,29 @@ define RunPracticeA()
      gBlockStart <- GetTime()
      gBlockDeadline <- 0   ## no time limit in the practice
 
-     ## the key-learning screen shows the footer of the first part
-     gMode <- Second(First(parts))
-     gFooter2Text <- Txt("FOOTER2_" + Uppercase(gMode))
-     gHeader.text <- Txt("PRACTICEHEADERTEXT")
-     Show(gHeader)
-     Draw()
-     DoKeyPractice(gKeyPracticeText)
-
-     LSLMarker("block_practice_start")
-     gTrial <- 1
-     ncorrect <- 0
-     loop(part, parts)
+     if(keypractice)
      {
-       gMode <- Second(part)
-       gFooter2Text <- Txt("FOOTER2_" + Uppercase(gMode))
-       ShowText(Txt(First(part)))
        gHeader.text <- Txt("PRACTICEHEADERTEXT")
        Show(gHeader)
-       loop(trial, Third(part))
-       {
-         gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", gTrial], ["<NUMTRIALS>", totalTrials]])
-         Draw()
-         DoTrial(trial, gParams.fixationtime, 1)
-         ncorrect <- ncorrect + gLastCorrect
-         gTrial <- gTrial + 1
-       }
+       Draw()
+       DoKeyPractice(gKeyPracticeText)
      }
-     LSLMarker("block_practice_end")
+     ShowText(Txt(introkey))
+     gHeader.text <- Txt("PRACTICEHEADERTEXT")
+     Show(gHeader)
+
+     LSLMarker("block_practice_" + mode + "_start")
+     gTrial <- 1
+     ncorrect <- 0
+     loop(trial, trials)
+     {
+       gLayout.subheader.text <- SubstituteStrings(gStrings.trial_counter, [["<NUM>", gTrial], ["<NUMTRIALS>", totalTrials]])
+       Draw()
+       DoTrial(trial, gParams.fixationtime, 1)
+       ncorrect <- ncorrect + gLastCorrect
+       gTrial <- gTrial + 1
+     }
+     LSLMarker("block_practice_" + mode + "_end")
 
      HideTrialScreen()
      choiceText <- SubstituteStrings(gStrings.practicedone,
@@ -832,17 +826,12 @@ define PracticeTrials()
   return(x)
 }
 
-## Version A practice: 3 parts of 4 trials, always in this order:
-## [intro text key, response mode, trials]
-define PracticeAParts()
+## Version A practice trials (the same before both blocks; the block's mode
+## decides whether the word or the ink is the answer):
+## ROSA in preto, PRETO in azul, VERDE in rosa, AZUL in verde
+define PracticeATrials()
 {
-  ## XXXXX in verde, azul, preto, rosa (respond to the ink)
-  neutral <- [["N",5,3],["N",5,2],["N",5,4],["N",5,1]]
-  ## ROSA in preto, PRETO in azul, VERDE in rosa, AZUL in verde
-  words   <- [["I",1,4],["I",4,2],["I",3,1],["I",2,3]]
-  return([["PRACTICE_A_NEUTRAL", "nomeacao", neutral],
-          ["PRACTICE_A_READING", "leitura", words],
-          ["PRACTICE_A_NAMING", "nomeacao", words]])
+  return([["I",1,4],["I",4,2],["I",3,1],["I",2,3]])
 }
 
 ## Random order of items (used for repeated practice rounds) with the
