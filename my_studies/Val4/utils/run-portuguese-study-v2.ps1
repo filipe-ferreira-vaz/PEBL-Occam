@@ -199,17 +199,34 @@ function Write-Params([string]$folder, [string]$json) {
 # Start/end beep for external tests: the same tone as the PEBL tests' BeepsStart()/BeepsEnd()
 # (utils/beeps.pbl: 1000 Hz, 50 ms, amplitude 0.8, 44.1 kHz 16-bit mono), built in memory.
 # Each beep is logged to counterbalance\portuguese-study-v2-external-beeps.csv
+#
+# Unlike PEBL (which keeps its audio stream open), SoundPlayer opens a new Windows audio
+# stream for every play. While that stream / the sound card wakes up (slower when the PC is
+# busy), the first part of the sound is lost, which can swallow most of a 50 ms tone. So the
+# tone is wrapped in silence: $beepLeadMs of silence before it (absorbs the wake-up, delays
+# the tone by that much) and $beepTailMs after it (the stream is not closed while the tone
+# is still in the audio buffers). The process runs at raised priority while the beep plays.
+# Opening the stream can take over a second (most in the first play of the process), before
+# any sound plays, so the logged clocktime (tone onset) is counted back from when playback
+# ends: end time - $beepTailMs - 50 ms. At startup a silent sound is played once
+# (Initialize-BeepAudio) so the first real beep does not pay the cold-start cost.
 $beepsLog = Join-Path $studyDir 'counterbalance\portuguese-study-v2-external-beeps.csv'
+$beepLeadMs = 500
+$beepTailMs = 300
 $beepPlayer = $null
 function Get-BeepPlayer {
   if ($script:beepPlayer) { return $script:beepPlayer }
   $sr = 44100; $f = 1000; $d = 50; $a = 0.8
   $n = [int]($sr * $d / 1000)
+  $lead = [int]($sr * $script:beepLeadMs / 1000); $tail = [int]($sr * $script:beepTailMs / 1000)
+  $total = $lead + $n + $tail
   $ms = New-Object IO.MemoryStream; $w = New-Object IO.BinaryWriter($ms)
-  $w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36 + $n * 2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))
+  $w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36 + $total * 2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))
   $w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr * 2)); $w.Write([int16]2); $w.Write([int16]16)
-  $w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n * 2))
+  $w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($total * 2))
+  $w.Write((New-Object byte[] ($lead * 2)))
   for ($i = 0; $i -lt $n; $i++) { $w.Write([int16][Math]::Round(32767 * $a * [Math]::Sin(2 * [Math]::PI * $f * $i / $sr))) }
+  $w.Write((New-Object byte[] ($tail * 2)))
   $w.Flush(); $ms.Position = 0
   $p = New-Object System.Media.SoundPlayer($ms)
   $p.Load()
@@ -217,19 +234,41 @@ function Get-BeepPlayer {
   return $p
 }
 function Play-Beep([string]$test, [string]$event) {
+  $proc = [Diagnostics.Process]::GetCurrentProcess()
+  $oldClass = $proc.PriorityClass
+  $thread = [Threading.Thread]::CurrentThread
+  $oldPrio = $thread.Priority
   try {
     $p = Get-BeepPlayer
-    $now = Get-Date
+    try { $proc.PriorityClass = 'High'; $thread.Priority = 'Highest' } catch { }
     $p.PlaySync()
+    $onset = (Get-Date).AddMilliseconds(-($beepTailMs + 50))
     if (-not (Test-Path $beepsLog)) {
       [IO.File]::WriteAllText($beepsLog, "participant,session,test,event,freq,durationms,amplitude,clocktime`r`n", $utf8NoBom)
     }
-    $row = '{0},{1},{2},{3},1000,50,0.8,{4}' -f $id, $Session, $test, $event, $now.ToString('yyyy-MM-dd HH:mm:ss.fff')
+    $row = '{0},{1},{2},{3},1000,50,0.8,{4}' -f $id, $Session, $test, $event, $onset.ToString('yyyy-MM-dd HH:mm:ss.fff')
     [IO.File]::AppendAllText($beepsLog, "$row`r`n", $utf8NoBom)
   } catch {
     Write-Host "  Could not play the $event beep ($($_.Exception.Message))." -ForegroundColor Yellow
+  } finally {
+    try { $thread.Priority = $oldPrio; $proc.PriorityClass = $oldClass } catch { }
   }
 }
+# Build the beep and play 200 ms of silence once, so the audio stack is loaded before the
+# first real beep (silent: nothing is heard, nothing is logged)
+function Initialize-BeepAudio {
+  try {
+    $null = Get-BeepPlayer
+    $sr = 44100; $n = [int]($sr * 0.2)
+    $ms = New-Object IO.MemoryStream; $w = New-Object IO.BinaryWriter($ms)
+    $w.Write([Text.Encoding]::ASCII.GetBytes('RIFF')); $w.Write([int](36 + $n * 2)); $w.Write([Text.Encoding]::ASCII.GetBytes('WAVEfmt '))
+    $w.Write([int]16); $w.Write([int16]1); $w.Write([int16]1); $w.Write([int]$sr); $w.Write([int]($sr * 2)); $w.Write([int16]2); $w.Write([int16]16)
+    $w.Write([Text.Encoding]::ASCII.GetBytes('data')); $w.Write([int]($n * 2)); $w.Write((New-Object byte[] ($n * 2)))
+    $w.Flush(); $ms.Position = 0
+    $s = New-Object System.Media.SoundPlayer($ms); $s.Load(); $s.PlaySync(); $s.Dispose()
+  } catch { }
+}
+Initialize-BeepAudio
 
 # A test done outside PEBL: say what to do and wait until it is finished.
 # With a beepTest name (Raven), a beep plays when it starts and again when Enter is pressed at the end.
