@@ -33,7 +33,8 @@
 # PEBL tests (stroop-pt included) beep at their start and end (beeps.pbl).
 # Raven matrices beeps like the PEBL tests (1000 Hz, 50 ms) when it starts (Enter = run it)
 # and when Enter is pressed at its end; beeps are logged to
-# counterbalance\portuguese-study-v2-external-beeps.csv.
+# counterbalance\portuguese-study-v2-external-beeps.csv and, like the PEBL tests'
+# beeps file, to external\raven\data\<ID>\beeps-<ID>.csv.
 #
 # affectgrid-portuguese-A and -B are copies of affectgrid-portuguese, one per
 # session, so their data are kept in separate folders. Each runs twice per
@@ -132,6 +133,16 @@ function Get-ExistingData([int]$n) {
       if ($files.Count -gt 0) { $found += "  tests\$($dir.Name)\data\$n ($($files.Count) file(s), last $(($files | Sort-Object LastWriteTime | Select-Object -Last 1).LastWriteTime.ToString('yyyy-MM-dd HH:mm')))" }
     }
   }
+  $extRoot = Join-Path $studyDir 'external'
+  if (Test-Path $extRoot) {
+    foreach ($dir in (Get-ChildItem -Path $extRoot -Directory)) {
+      $d = Join-Path $dir.FullName "data\$n"
+      if (Test-Path $d) {
+        $files = @(Get-ChildItem -Path $d -File -Recurse)
+        if ($files.Count -gt 0) { $found += "  external\$($dir.Name)\data\$n ($($files.Count) file(s), last $(($files | Sort-Object LastWriteTime | Select-Object -Last 1).LastWriteTime.ToString('yyyy-MM-dd HH:mm')))" }
+      }
+    }
+  }
   if (Test-Path $sessionsLog) {
     foreach ($r in (Import-Csv $sessionsLog | Where-Object { "$($_.participant)".Trim() -eq "$n" })) {
       $found += "  sessions log: session $($r.session) started $($r.time)"
@@ -198,7 +209,12 @@ function Write-Params([string]$folder, [string]$json) {
 
 # Start/end beep for external tests: the same tone as the PEBL tests' BeepsStart()/BeepsEnd()
 # (utils/beeps.pbl: 1000 Hz, 50 ms, amplitude 0.8, 44.1 kHz 16-bit mono), built in memory.
-# Each beep is logged to counterbalance\portuguese-study-v2-external-beeps.csv
+# Each beep is logged to counterbalance\portuguese-study-v2-external-beeps.csv (all
+# participants) and, like the PEBL tests' beeps-<ID>.csv, to
+# external\<test>\data\<ID>\beeps-<ID>.csv (same columns: subnum,event,freq,durationms,
+# amplitude,abstime,clocktime). abstime = ms from the start of that external test's step
+# (when Enter was pressed to run it) to the tone onset, like PEBL's GetTime() from test launch.
+# (external\, not tests\: setup-study.bat treats every folder in tests\ as a PEBL test.)
 #
 # Unlike PEBL (which keeps its audio stream open), SoundPlayer opens a new Windows audio
 # stream for every play. While that stream / the sound card wakes up (slower when the PC is
@@ -233,7 +249,18 @@ function Get-BeepPlayer {
   $script:beepPlayer = $p
   return $p
 }
-function Play-Beep([string]$test, [string]$event) {
+function Write-ExternalBeepFile([string]$test, [string]$event, $abstime, [datetime]$onset) {
+  $dir = Join-Path $studyDir "external\$test\data\$id"
+  if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+  $file = Join-Path $dir "beeps-$id.csv"
+  if (-not (Test-Path $file)) {
+    [IO.File]::WriteAllText($file, "subnum,event,freq,durationms,amplitude,abstime,clocktime`r`n", $utf8NoBom)
+  }
+  $row = '{0},{1},1000,50,0.8,{2},{3}' -f $id, $event, $abstime, $onset.ToString('yyyy-MM-dd HH:mm:ss.fff')
+  [IO.File]::AppendAllText($file, "$row`r`n", $utf8NoBom)
+}
+# $clock: stopwatch started at the beginning of the external test's step (for abstime)
+function Play-Beep([string]$test, [string]$event, [Diagnostics.Stopwatch]$clock) {
   $proc = [Diagnostics.Process]::GetCurrentProcess()
   $oldClass = $proc.PriorityClass
   $thread = [Threading.Thread]::CurrentThread
@@ -243,11 +270,13 @@ function Play-Beep([string]$test, [string]$event) {
     try { $proc.PriorityClass = 'High'; $thread.Priority = 'Highest' } catch { }
     $p.PlaySync()
     $onset = (Get-Date).AddMilliseconds(-($beepTailMs + 50))
+    $abstime = if ($clock) { $clock.ElapsedMilliseconds - ($beepTailMs + 50) } else { '' }
     if (-not (Test-Path $beepsLog)) {
       [IO.File]::WriteAllText($beepsLog, "participant,session,test,event,freq,durationms,amplitude,clocktime`r`n", $utf8NoBom)
     }
     $row = '{0},{1},{2},{3},1000,50,0.8,{4}' -f $id, $Session, $test, $event, $onset.ToString('yyyy-MM-dd HH:mm:ss.fff')
     [IO.File]::AppendAllText($beepsLog, "$row`r`n", $utf8NoBom)
+    Write-ExternalBeepFile $test $event $abstime $onset
   } catch {
     Write-Host "  Could not play the $event beep ($($_.Exception.Message))." -ForegroundColor Yellow
   } finally {
@@ -273,10 +302,11 @@ Initialize-BeepAudio
 # A test done outside PEBL: say what to do and wait until it is finished.
 # With a beepTest name (Raven), a beep plays when it starts and again when Enter is pressed at the end.
 function Run-External([string]$what, [string]$beepTest = $null) {
-  if ($beepTest) { Play-Beep $beepTest 'beep_start' }
+  $clock = [Diagnostics.Stopwatch]::StartNew()
+  if ($beepTest) { Play-Beep $beepTest 'beep_start' $clock }
   Write-Host "  Do the $what now, outside PEBL." -ForegroundColor Magenta
   $null = Read-Host '  Press Enter when it is finished'
-  if ($beepTest) { Play-Beep $beepTest 'beep_end' }
+  if ($beepTest) { Play-Beep $beepTest 'beep_end' $clock }
 }
 
 # One step of the session: a PEBL test (Folder, Pbl, optional Params json) or an

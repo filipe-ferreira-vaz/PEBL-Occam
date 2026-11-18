@@ -3,3 +3,6 @@
 my_studies/*/tests/*/data/
 
 my_studies/*/study_results/
+
+# Raven (external test) beeps per participant
+my_studies/*/external/*/data/

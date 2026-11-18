@@ -10,7 +10,8 @@ rem   Session A: bigfive-portuguese, affectgrid-portuguese-A, vsearch-customize-
 rem              TNT-custom-stimulus-time-portuguese, maze-increasing-difficulty-v1-portuguese,
 rem              stroop-pt
 rem   Session B: affectgrid-portuguese-B, ptrails-pt-portuguese, tol-portuguese
-rem Raven, go/no-go and the EMA survey are run outside PEBL: save their results by hand.
+rem   Session B also: raven (its start/end beeps file, from external\raven\data\<ID>\)
+rem Raven answers, go/no-go and the EMA survey are done outside PEBL: save their results by hand.
 rem Options: save-portuguese-study-v2-results.bat <ID> <A or B>
 rem   gives the ID and session (it then only asks where to save, and does not pause
 rem   at the end); run-portuguese-study-v2 calls it this way when the session ends.
@@ -52,10 +53,13 @@ if not defined DEST set "DEST=%STUDY%"
 if "%DEST:~-1%"=="\" set "DEST=%DEST:~0,-1%"
 if not exist "%DEST%\" (echo   Folder not found: %DEST%& goto ask_dest)
 
+rem LIST = PEBL tests (tests\<test>\data\<ID>), EXTLIST = external tests (external\<test>\data\<ID>)
+set "EXTLIST="
 if "%SESSION%"=="A" (
   set "LIST=bigfive-portuguese affectgrid-portuguese-A vsearch-customize-portuguese TNT-custom-stimulus-time-portuguese maze-increasing-difficulty-v1-portuguese stroop-pt"
 ) else (
   set "LIST=affectgrid-portuguese-B ptrails-pt-portuguese tol-portuguese"
+  set "EXTLIST=raven"
 )
 
 set "OUT=%DEST%\study_results\%ID%_%SESSION%"
@@ -86,6 +90,20 @@ for %%T in (%LIST%) do (
     set /a MISSING+=1
   )
 )
+for %%T in (%EXTLIST%) do (
+  set "SRC=%STUDY%external\%%T\data\%ID%"
+  if exist "!SRC!\*" (
+    mkdir "%OUT%\%%T"
+    xcopy "!SRC!\*" "%OUT%\%%T\" /E /I /Y /Q >nul
+    set "N=0"
+    for /f %%C in ('dir /b /s /a-d "%OUT%\%%T" ^| "%SystemRoot%\System32\find.exe" /c /v ""') do set "N=%%C"
+    echo   %%T: !N! file^(s^)
+    set /a COPIED+=1
+  ) else (
+    echo   %%T: NO DATA for participant %ID%
+    set /a MISSING+=1
+  )
+)
 
 echo.
 if %COPIED% EQU 0 (
@@ -96,7 +114,7 @@ if %COPIED% EQU 0 (
 echo %COPIED% test^(s^) saved to %OUT%
 if %MISSING% GTR 0 echo %MISSING% test^(s^) had no data for participant %ID% - check above.
 if "%SESSION%"=="A" echo Remember to save the EMA survey results ^(done outside PEBL^).
-if "%SESSION%"=="B" echo Remember to save the Raven, go/no-go and EMA survey results ^(done outside PEBL^).
+if "%SESSION%"=="B" echo Remember to save the Raven answers, go/no-go and EMA survey results ^(done outside PEBL^).
 
 :end
 echo.
